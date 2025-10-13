@@ -1,7 +1,6 @@
 // Helper: Render color identity as icons
 function renderColorIdentity(colorIdentity) {
-  if (!Array.isArray(colorIdentity) || colorIdentity.length === 0) colorIdentity = ['C']; // colorless
-  // Scryfall color codes: W, U, B, R, G
+  if (!Array.isArray(colorIdentity) || colorIdentity.length === 0) colorIdentity = ['C'];
   return (
     <span className="inline-flex items-center gap-1">
       {colorIdentity.map((c, i) => (
@@ -9,7 +8,7 @@ function renderColorIdentity(colorIdentity) {
           key={i}
           src={`https://svgs.scryfall.io/card-symbols/${c}.svg`}
           alt={c}
-          style={{height: '1.2em', display: 'inline'}}
+          style={{height: '1.2em'}}
         />
       ))}
     </span>
@@ -20,27 +19,24 @@ function renderColorIdentity(colorIdentity) {
 function renderManaIcons(cmc, manaCost) {
   if (typeof cmc !== 'number' || cmc < 0) return null;
   if (!manaCost || typeof manaCost !== 'string' || manaCost.trim() === '') {
-    // fallback to generic icons
     if (cmc === 0) {
-      return <img src="https://svgs.scryfall.io/card-symbols/0.svg" alt="0" style={{height: '1.2em', display: 'inline'}} />;
+      return <img src="https://svgs.scryfall.io/card-symbols/0.svg" alt="0" style={{height: '1.2em'}} />;
     }
     if (cmc > 10) {
-      return <span className="inline-flex items-center"><img src="https://svgs.scryfall.io/card-symbols/10.svg" alt="10" style={{height: '1.2em', display: 'inline'}} /> <span className="ml-1">({cmc})</span></span>;
+      return <span className="inline-flex items-center"><img src="https://svgs.scryfall.io/card-symbols/10.svg" alt="10" style={{height: '1.2em'}} /> <span className="ml-1">({cmc})</span></span>;
     }
     return (
       <span className="inline-flex items-center">
         {[...Array(cmc)].map((_, i) => (
-          <img key={i} src={`https://svgs.scryfall.io/card-symbols/1.svg`} alt="1" style={{height: '1.2em', display: 'inline'}} />
+          <img key={i} src={`https://svgs.scryfall.io/card-symbols/1.svg`} alt="1" style={{height: '1.2em'}} />
         ))}
       </span>
     );
   }
-  // Parse manaCost string, e.g. "{2}{U}{R/W}"
   const symbolRegex = /\{([^}]+)\}/g;
   const symbols = [];
   let match;
   while ((match = symbolRegex.exec(manaCost)) !== null) {
-    // Remove forward slash from dual mana symbols
     symbols.push(match[1].replace(/\//g, ""));
   }
   return (
@@ -50,7 +46,7 @@ function renderManaIcons(cmc, manaCost) {
           key={i}
           src={`https://svgs.scryfall.io/card-symbols/${encodeURIComponent(sym)}.svg`}
           alt={sym}
-          style={{height: '1.2em', display: 'inline', paddingLeft: '0.2em'}}
+          style={{height: '1.2em', paddingLeft: '0.2em'}}
         />
       ))}
     </span>
@@ -135,7 +131,6 @@ function pickTwoDistinct(arr) {
 }
 
 export default function CommanderGuessGame() {
-  // State for two random Scryfall commanders
   const [leftMeta, setLeftMeta] = useState(null);
   const [rightMeta, setRightMeta] = useState(null);
   const [streak, setStreak] = useState(0);
@@ -144,7 +139,6 @@ export default function CommanderGuessGame() {
   const [loadingPair, setLoadingPair] = useState(false);
   const [userGuess, setUserGuess] = useState(null);
 
-  // Fetch two distinct random commanders from Scryfall and look up their EDHREC rank
   const loadNewPair = useCallback(async () => {
     setResult(null);
     setLeftMeta(null);
@@ -193,12 +187,9 @@ export default function CommanderGuessGame() {
   }, []);
 
   useEffect(() => {
-    // Only load a new pair on initial mount
     loadNewPair();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Guess logic: pick which has higher CMC (converted mana cost)
   const makeGuess = async (side) => {
     if (!leftMeta || !rightMeta) return;
     setUserGuess(side);
@@ -234,7 +225,7 @@ export default function CommanderGuessGame() {
 
       <div className="mb-4 flex items-center gap-4">
         <div className="bg-slate-700 px-4 py-2 rounded">Score: <span className="font-semibold">{streak}</span></div>
-  <button className="px-3 py-2 rounded bg-indigo-600 hover:bg-indigo-500" onClick={() => { setStreak(0); next(); }}>New Game</button>
+        <button className="px-3 py-2 rounded bg-indigo-600 hover:bg-indigo-500" onClick={() => { setStreak(0); next(); }}>New Game</button>
       </div>
 
       <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -266,7 +257,9 @@ export default function CommanderGuessGame() {
                     const centerY = rect.height / 2;
                     const rotateX = ((y - centerY) / centerY) * -10;
                     const rotateY = ((x - centerX) / centerX) * 10;
-                    img.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+                      img.style.setProperty('--rotate-x', `${rotateX}deg`);
+                      img.style.setProperty('--rotate-y', `${rotateY}deg`);
+                      img.style.transform = 'perspective(800px) rotateX(var(--rotate-x)) rotateY(var(--rotate-y))';
                   }}
                   onMouseLeave={e => {
                     e.currentTarget.style.transform = '';
@@ -330,7 +323,9 @@ export default function CommanderGuessGame() {
                     const centerY = rect.height / 2;
                     const rotateX = ((y - centerY) / centerY) * -10;
                     const rotateY = ((x - centerX) / centerX) * 10;
-                    img.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+                      img.style.setProperty('--rotate-x', `${rotateX}deg`);
+                      img.style.setProperty('--rotate-y', `${rotateY}deg`);
+                      img.style.transform = 'perspective(800px) rotateX(var(--rotate-x)) rotateY(var(--rotate-y))';
                   }}
                   onMouseLeave={e => {
                     e.currentTarget.style.transform = '';
@@ -389,7 +384,15 @@ export default function CommanderGuessGame() {
           </div>
         </>
       )}
-      <div className="mt-6 text-sm text-slate-400 max-w-3xl text-center">Wishlist Vagabones on Steam!</div>
+      <div className="w-full flex justify-center items-center mt-8 mb-2 gap-6">
+        <a href="https://store.steampowered.com/app/3157380/Vagabones/" target="_blank" rel="noopener noreferrer">
+          <img src="src/assets/VagabonesWishlist.png" alt="Vagabones Wishlist Banner" className="h-auto" style={{display: 'block'}} />
+        </a>
+        <span className="text-white text-lg font-bold uppercase text-center">
+          Also, wishlist our game Vagabones on{' '}
+          <a href="https://store.steampowered.com/app/3157380/Vagabones/" target="_blank" rel="noopener noreferrer" className="underline text-indigo-300">STEAM</a>!
+        </span>
+      </div>
     </div>
   );
 }
