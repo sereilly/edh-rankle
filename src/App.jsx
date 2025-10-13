@@ -254,7 +254,7 @@ export default function CommanderGuessGame() {
                 <img
                   src={leftMeta.cardImage}
                   alt={leftMeta.name + ' card'}
-                  className="relative z-10 max-h-80 object-contain shadow-lg card-tilt cursor-pointer"
+                  className={`relative z-10 max-h-80 object-contain shadow-lg card cursor-pointer${userGuess === 'left' && result ? ' card-spin' : ''}`}
                   style={{borderRadius: '11px'}}
                   onClick={() => !result && !loadingPair && makeGuess('left')}
                   onMouseMove={e => {
@@ -318,7 +318,7 @@ export default function CommanderGuessGame() {
                 <img
                   src={rightMeta.cardImage}
                   alt={rightMeta.name + ' card'}
-                  className="relative z-10 max-h-80 object-contain shadow-lg card-tilt cursor-pointer"
+                  className={`relative z-10 max-h-80 object-contain shadow-lg card cursor-pointer${userGuess === 'right' && result ? ' card-spin' : ''}`}
                   style={{borderRadius: '11px'}}
                   onClick={() => !result && !loadingPair && makeGuess('right')}
                   onMouseMove={e => {
