@@ -229,7 +229,7 @@ export default function CommanderGuessGame() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white p-6 flex flex-col items-center">
-      <h1 className="text-3xl font-bold mb-4">EDH Ranklke</h1>
+      <h1 className="text-3xl font-bold mb-4">EDH Rankle</h1>
       <p className="mb-4 text-slate-300 max-w-xl text-center">Guess which commander has a better rank on EDHREC. Ranks are revealed after guessing. Your streak increases for each correct guess and resets to 0 on a wrong guess.</p>
 
       <div className="mb-4 flex items-center gap-4">
