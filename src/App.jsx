@@ -238,6 +238,14 @@ export default function CommanderGuessGame() {
         >
           <div className="w-full">
             <div className="w-full h-96 bg-black overflow-hidden flex items-center justify-center relative">
+              {/* Rank above card */}
+              {result && (
+                <div className="absolute top-2 left-0 w-full flex justify-center z-20">
+                  <span className="text-4xl font-extrabold text-indigo-300 drop-shadow-lg bg-slate-900 bg-opacity-80 px-4 py-2 rounded">
+                    {typeof leftMeta?.rank === 'number' ? `Rank #${leftMeta.rank}` : 'Rank unavailable'}
+                  </span>
+                </div>
+              )}
               {/* Art as semi-transparent background */}
               {leftMeta && leftMeta.art && (
                 <img src={leftMeta.art} alt={leftMeta.name + ' art'}
@@ -287,12 +295,7 @@ export default function CommanderGuessGame() {
                 </div>
                 <div className="text-sm text-slate-400">{leftMeta?.set_name}</div>
                 <div className="text-xs text-slate-400 flex items-center">Mana Value: {renderManaIcons(leftMeta?.cmc, leftMeta?.scryfall?.mana_cost) || 'N/A'}</div>
-                {/* Color identity now shown next to name above */}
                 <div className="text-xs text-slate-400">{leftMeta?.oracle_text}</div>
-                {/* Show rank only after guess */}
-                {result && (
-                  <div className="text-lg text-indigo-400 mt-2">{typeof leftMeta?.rank === 'number' ? `EDHREC Rank #${leftMeta.rank}` : 'EDHREC Rank unavailable'}</div>
-                )}
               </div>
             )}
           </div>
@@ -304,6 +307,14 @@ export default function CommanderGuessGame() {
         >
           <div className="w-full">
             <div className="w-full h-96 bg-black overflow-hidden flex items-center justify-center relative">
+              {/* Rank above card */}
+              {result && (
+                <div className="absolute top-2 left-0 w-full flex justify-center z-20">
+                  <span className="text-4xl font-extrabold text-indigo-300 drop-shadow-lg bg-slate-900 bg-opacity-80 px-4 py-2 rounded">
+                    {typeof rightMeta?.rank === 'number' ? `Rank #${rightMeta.rank}` : 'Rank unavailable'}
+                  </span>
+                </div>
+              )}
               {/* Art as semi-transparent background */}
               {rightMeta && rightMeta.art && (
                 <img src={rightMeta.art} alt={rightMeta.name + ' art'}
@@ -353,12 +364,7 @@ export default function CommanderGuessGame() {
                 </div>
                 <div className="text-sm text-slate-400">{rightMeta?.set_name}</div>
                 <div className="text-xs text-slate-400 flex items-center">Mana Value: {renderManaIcons(rightMeta?.cmc, rightMeta?.scryfall?.mana_cost) || 'N/A'}</div>
-                {/* Color identity now shown next to name above */}
                 <div className="text-xs text-slate-400">{rightMeta?.oracle_text}</div>
-                {/* Show rank only after guess */}
-                {result && (
-                  <div className="text-lg text-indigo-400 mt-2">{typeof rightMeta?.rank === 'number' ? `EDHREC Rank #${rightMeta.rank}` : 'EDHREC Rank unavailable'}</div>
-                )}
               </div>
             )}
           </div>
