@@ -1,6 +1,6 @@
 // Helper: Render color identity as icons
 function renderColorIdentity(colorIdentity) {
-  if (!Array.isArray(colorIdentity) || colorIdentity.length === 0) return <span className="text-slate-500">Colorless</span>;
+  if (!Array.isArray(colorIdentity) || colorIdentity.length === 0) colorIdentity = ['C']; // colorless
   // Scryfall color codes: W, U, B, R, G
   return (
     <span className="inline-flex items-center gap-1">
@@ -233,13 +233,15 @@ export default function CommanderGuessGame() {
       <p className="mb-4 text-slate-300 max-w-xl text-center">Guess which commander has a better rank on EDHREC. Ranks are revealed after guessing. Your streak increases for each correct guess and resets to 0 on a wrong guess.</p>
 
       <div className="mb-4 flex items-center gap-4">
-        <div className="bg-slate-700 px-4 py-2 rounded">Streak: <span className="font-semibold">{streak}</span></div>
-        <button className="px-3 py-2 rounded bg-indigo-600 hover:bg-indigo-500" onClick={() => { setStreak(0); }}>New Game</button>
+        <div className="bg-slate-700 px-4 py-2 rounded">Score: <span className="font-semibold">{streak}</span></div>
+  <button className="px-3 py-2 rounded bg-indigo-600 hover:bg-indigo-500" onClick={() => { setStreak(0); next(); }}>New Game</button>
       </div>
 
       <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Left */}
-        <div className="bg-slate-900 rounded-lg p-4 flex flex-col min-h-[600px] justify-between items-center">
+        <div
+          className="bg-slate-900 rounded-lg p-4 flex flex-col justify-between items-center"
+        >
           <div className="w-full">
             <div className="w-full h-96 bg-black overflow-hidden flex items-center justify-center relative">
               {/* Art as semi-transparent background */}
@@ -249,37 +251,61 @@ export default function CommanderGuessGame() {
               )}
               {/* Card image in foreground */}
               {leftMeta && leftMeta.cardImage ? (
-                <img src={leftMeta.cardImage} alt={leftMeta.name + ' card'}
-                  className="relative z-10 max-h-80 object-contain shadow-lg" style={{borderRadius: '11px'}} />
+                <img
+                  src={leftMeta.cardImage}
+                  alt={leftMeta.name + ' card'}
+                  className="relative z-10 max-h-80 object-contain shadow-lg card-tilt cursor-pointer"
+                  style={{borderRadius: '11px'}}
+                  onClick={() => !result && !loadingPair && makeGuess('left')}
+                  onMouseMove={e => {
+                    const img = e.currentTarget;
+                    const rect = img.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    const rotateX = ((y - centerY) / centerY) * -10;
+                    const rotateY = ((x - centerX) / centerX) * 10;
+                    img.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.transform = '';
+                  }}
+                />
               ) : (
-                <div className="relative z-10 text-slate-500">{loadingPair ? 'Loading card...' : 'No card available'}</div>
+                <div className="relative z-10 text-slate-500 flex items-center gap-2">
+                  {loadingPair ? (
+                    <>
+                      <span>Loading card...</span>
+                      <span className="inline-block w-5 h-5 border-2 border-t-2 border-t-indigo-400 border-gray-400 rounded-full animate-spin"></span>
+                    </>
+                  ) : 'No card available'}
+                </div>
               )}
             </div>
-            <div className="w-full flex flex-col items-start mt-3">
-              <div className="flex items-center gap-2">
-                <span className="font-semibold">{leftMeta?.name}</span>
-                {renderColorIdentity(leftMeta?.scryfall?.color_identity)}
+            {!loadingPair && (
+              <div className="w-full flex flex-col items-start mt-3">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">{leftMeta?.name}</span>
+                  {renderColorIdentity(leftMeta?.scryfall?.color_identity)}
+                </div>
+                <div className="text-sm text-slate-400">{leftMeta?.set_name}</div>
+                <div className="text-xs text-slate-400 flex items-center">Mana Value: {renderManaIcons(leftMeta?.cmc, leftMeta?.scryfall?.mana_cost) || 'N/A'}</div>
+                {/* Color identity now shown next to name above */}
+                <div className="text-xs text-slate-400">{leftMeta?.oracle_text}</div>
+                {/* Show rank only after guess */}
+                {result && (
+                  <div className="text-lg text-indigo-400 mt-2">{typeof leftMeta?.rank === 'number' ? `EDHREC Rank #${leftMeta.rank}` : 'EDHREC Rank unavailable'}</div>
+                )}
               </div>
-              <div className="text-sm text-slate-400">{leftMeta?.set_name}</div>
-              <div className="text-xs text-slate-400 flex items-center">Mana Value: {renderManaIcons(leftMeta?.cmc, leftMeta?.scryfall?.mana_cost) || 'N/A'}</div>
-              {/* Color identity now shown next to name above */}
-              <div className="text-xs text-slate-400">{leftMeta?.oracle_text}</div>
-              {/* Show rank only after guess */}
-              {result && (
-                <div className="text-lg text-indigo-400 mt-2">{typeof leftMeta?.rank === 'number' ? `EDHREC Rank #${leftMeta.rank}` : 'EDHREC Rank unavailable'}</div>
-              )}
-            </div>
+            )}
           </div>
-          {!result && (
-            <button
-              onClick={() => makeGuess('left')}
-              className="w-full py-3 text-xl rounded bg-emerald-600 hover:bg-emerald-500 font-bold shadow-lg"
-            >Left</button>
-          )}
         </div>
 
         {/* Right */}
-        <div className="bg-slate-900 rounded-lg p-4 flex flex-col min-h-[600px] justify-between items-center">
+        <div
+          className="bg-slate-900 rounded-lg p-4 flex flex-col justify-between items-center"
+        >
           <div className="w-full">
             <div className="w-full h-96 bg-black overflow-hidden flex items-center justify-center relative">
               {/* Art as semi-transparent background */}
@@ -289,33 +315,55 @@ export default function CommanderGuessGame() {
               )}
               {/* Card image in foreground */}
               {rightMeta && rightMeta.cardImage ? (
-                <img src={rightMeta.cardImage} alt={rightMeta.name + ' card'}
-                  className="relative z-10 max-h-80 object-contain shadow-lg" style={{borderRadius: '11px'}} />
+                <img
+                  src={rightMeta.cardImage}
+                  alt={rightMeta.name + ' card'}
+                  className="relative z-10 max-h-80 object-contain shadow-lg card-tilt cursor-pointer"
+                  style={{borderRadius: '11px'}}
+                  onClick={() => !result && !loadingPair && makeGuess('right')}
+                  onMouseMove={e => {
+                    const img = e.currentTarget;
+                    const rect = img.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    const rotateX = ((y - centerY) / centerY) * -10;
+                    const rotateY = ((x - centerX) / centerX) * 10;
+                    img.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.transform = '';
+                  }}
+                />
               ) : (
-                <div className="relative z-10 text-slate-500">{loadingPair ? 'Loading card...' : 'No card available'}</div>
+                <div className="relative z-10 text-slate-500 flex items-center gap-2">
+                  {loadingPair ? (
+                    <>
+                      <span>Loading card...</span>
+                      <span className="inline-block w-5 h-5 border-2 border-t-2 border-t-indigo-400 border-gray-400 rounded-full animate-spin"></span>
+                    </>
+                  ) : 'No card available'}
+                </div>
               )}
             </div>
-            <div className="w-full flex flex-col items-start mt-3">
-              <div className="flex items-center gap-2">
-                <span className="font-semibold">{rightMeta?.name}</span>
-                {renderColorIdentity(rightMeta?.scryfall?.color_identity)}
+            {!loadingPair && (
+              <div className="w-full flex flex-col items-start mt-3">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">{rightMeta?.name}</span>
+                  {renderColorIdentity(rightMeta?.scryfall?.color_identity)}
+                </div>
+                <div className="text-sm text-slate-400">{rightMeta?.set_name}</div>
+                <div className="text-xs text-slate-400 flex items-center">Mana Value: {renderManaIcons(rightMeta?.cmc, rightMeta?.scryfall?.mana_cost) || 'N/A'}</div>
+                {/* Color identity now shown next to name above */}
+                <div className="text-xs text-slate-400">{rightMeta?.oracle_text}</div>
+                {/* Show rank only after guess */}
+                {result && (
+                  <div className="text-lg text-indigo-400 mt-2">{typeof rightMeta?.rank === 'number' ? `EDHREC Rank #${rightMeta.rank}` : 'EDHREC Rank unavailable'}</div>
+                )}
               </div>
-              <div className="text-sm text-slate-400">{rightMeta?.set_name}</div>
-              <div className="text-xs text-slate-400 flex items-center">Mana Value: {renderManaIcons(rightMeta?.cmc, rightMeta?.scryfall?.mana_cost) || 'N/A'}</div>
-              {/* Color identity now shown next to name above */}
-              <div className="text-xs text-slate-400">{rightMeta?.oracle_text}</div>
-              {/* Show rank only after guess */}
-              {result && (
-                <div className="text-lg text-indigo-400 mt-2">{typeof rightMeta?.rank === 'number' ? `EDHREC Rank #${rightMeta.rank}` : 'EDHREC Rank unavailable'}</div>
-              )}
-            </div>
+            )}
           </div>
-          {!result && (
-            <button
-              onClick={() => makeGuess('right')}
-              className="w-full py-3 text-xl rounded bg-emerald-600 hover:bg-emerald-500 font-bold shadow-lg"
-            >Right</button>
-          )}
         </div>
       </div>
 
@@ -335,15 +383,13 @@ export default function CommanderGuessGame() {
             ) : result === 'tie' ? null : (
               <div className="flex flex-col items-center">
                 <button className="px-5 py-3 rounded bg-red-600 hover:bg-red-500 text-xl font-semibold mb-2" onClick={() => { next(); setLastStreak(null); }}>New Game</button>
-                <div className="text-lg text-slate-300">Final Streak: <span className="font-bold">{lastStreak !== null ? lastStreak : streak}</span></div>
+                <div className="text-lg text-slate-300">Final Score: <span className="font-bold">{lastStreak !== null ? lastStreak : streak}</span></div>
               </div>
             )}
           </div>
         </>
       )}
-
       <div className="mt-6 text-sm text-slate-400 max-w-3xl text-center">Wishlist Vagabones on Steam!</div>
-
     </div>
   );
 }
