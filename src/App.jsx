@@ -74,6 +74,8 @@ async function fetchRandomCommanderFromScryfall() {
   };
 }
 
+import wishlistImage from './assets/VagabonesWishlist.png';
+
 // EDHREC Commander Rank Guessing Game
 // Single-file React component. Default export at bottom.
 // Tailwind CSS assumed available in the host project.
@@ -406,7 +408,7 @@ export default function CommanderGuessGame() {
       )}
       <div className="w-full flex justify-center items-center mt-8 mb-2 gap-6">
         <a href="https://store.steampowered.com/app/3157380/Vagabones/" target="_blank" rel="noopener noreferrer">
-          <img src="src/assets/VagabonesWishlist.png" alt="Vagabones Wishlist Banner" className="h-auto" style={{display: 'block'}} />
+          <img src={wishlistImage} alt="Vagabones Wishlist Banner" className="h-auto" style={{display: 'block'}} />
         </a>
         <span className="text-white text-lg font-bold uppercase text-center">
           Also, wishlist our game Vagabones on{' '}
