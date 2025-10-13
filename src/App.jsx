@@ -93,21 +93,30 @@ export default function CommanderGuessGame() {
     setRightMeta(null);
     setLoadingPair(true);
     try {
-      let left, right;
-      // Try to get two distinct commanders
-      left = await fetchRandomCommanderFromScryfall();
+      let left, right, leftRank, rightRank;
+      let attempts = 0;
+      // Keep trying until both cards have valid ranks and are distinct
+      do {
+        left = await fetchRandomCommanderFromScryfall();
+        leftRank = await fetchEdhrecCommanderRank(left.name);
+        attempts++;
+      } while ((typeof leftRank !== 'number' || leftRank <= 0) && attempts < 10);
+
+      attempts = 0;
       do {
         right = await fetchRandomCommanderFromScryfall();
-      } while (right.name === left.name);
+        rightRank = await fetchEdhrecCommanderRank(right.name);
+        attempts++;
+      } while ((right.name === left.name || typeof rightRank !== 'number' || rightRank <= 0) && attempts < 10);
 
-      // Look up EDHREC rank for each
-      const [leftRank, rightRank] = await Promise.all([
-        fetchEdhrecCommanderRank(left.name),
-        fetchEdhrecCommanderRank(right.name)
-      ]);
-
-      setLeftMeta({ ...left, rank: typeof leftRank === 'number' ? leftRank : null });
-      setRightMeta({ ...right, rank: typeof rightRank === 'number' ? rightRank : null });
+      // If either still fails, show error
+      if (typeof leftRank !== 'number' || typeof rightRank !== 'number' || left.name === right.name) {
+        setLeftMeta({ error: "Failed to fetch valid commander from Scryfall." });
+        setRightMeta({ error: "Failed to fetch valid commander from Scryfall." });
+      } else {
+        setLeftMeta({ ...left, rank: leftRank });
+        setRightMeta({ ...right, rank: rightRank });
+      }
     } catch (e) {
       setLeftMeta({ error: "Failed to fetch commander from Scryfall." });
       setRightMeta({ error: "Failed to fetch commander from Scryfall." });
@@ -158,13 +167,13 @@ export default function CommanderGuessGame() {
 
       <div className="mb-4 flex items-center gap-4">
         <div className="bg-slate-700 px-4 py-2 rounded">Streak: <span className="font-semibold">{streak}</span></div>
-        <button className="px-3 py-2 rounded bg-indigo-600 hover:bg-indigo-500" onClick={() => { setStreak(0); }}>Reset Streak</button>
+        <button className="px-3 py-2 rounded bg-indigo-600 hover:bg-indigo-500" onClick={() => { setStreak(0); }}>New Game</button>
       </div>
 
       <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Left */}
         <div className="bg-slate-900 rounded-lg p-4 flex flex-col items-center">
-          <div className="w-full h-96 bg-black rounded overflow-hidden flex items-center justify-center relative">
+          <div className="w-full h-96 bg-black overflow-hidden flex items-center justify-center relative">
             {/* Art as semi-transparent background */}
             {leftMeta && leftMeta.art && (
               <img src={leftMeta.art} alt={leftMeta.name + ' art'}
@@ -173,12 +182,12 @@ export default function CommanderGuessGame() {
             {/* Card image in foreground */}
             {leftMeta && leftMeta.cardImage ? (
               <img src={leftMeta.cardImage} alt={leftMeta.name + ' card'}
-                className="relative z-10 max-h-80 object-contain rounded shadow-lg" />
+                className="relative z-10 max-h-80 object-contain shadow-lg" />
             ) : (
               <div className="relative z-10 text-slate-500">{loadingPair ? 'Loading card...' : 'No card available'}</div>
             )}
           </div>
-          <div className="w-full flex items-center justify-between mt-3">
+          <div className="w-full flex flex-col items-start mt-3">
             <div>
               <div className="font-semibold">{leftMeta?.name}</div>
               <div className="text-sm text-slate-400">{leftMeta?.set_name}</div>
@@ -189,15 +198,18 @@ export default function CommanderGuessGame() {
                 <div className="text-lg text-indigo-400 mt-2">{typeof leftMeta?.rank === 'number' ? `EDHREC Rank #${leftMeta.rank}` : 'EDHREC Rank unavailable'}</div>
               )}
             </div>
-            <div className="flex flex-col items-end gap-2">
-              {!result && <button onClick={() => makeGuess('left')} className="px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500">Pick</button>}
-            </div>
+            {!result && (
+              <button
+                onClick={() => makeGuess('left')}
+                className="mt-6 w-full py-3 text-xl rounded bg-emerald-600 hover:bg-emerald-500 font-bold shadow-lg"
+              >Left</button>
+            )}
           </div>
         </div>
 
         {/* Right */}
         <div className="bg-slate-900 rounded-lg p-4 flex flex-col items-center">
-          <div className="w-full h-96 bg-black rounded overflow-hidden flex items-center justify-center relative">
+          <div className="w-full h-96 bg-black overflow-hidden flex items-center justify-center relative">
             {/* Art as semi-transparent background */}
             {rightMeta && rightMeta.art && (
               <img src={rightMeta.art} alt={rightMeta.name + ' art'}
@@ -206,12 +218,12 @@ export default function CommanderGuessGame() {
             {/* Card image in foreground */}
             {rightMeta && rightMeta.cardImage ? (
               <img src={rightMeta.cardImage} alt={rightMeta.name + ' card'}
-                className="relative z-10 max-h-80 object-contain rounded shadow-lg" />
+                className="relative z-10 max-h-80 object-contain shadow-lg" />
             ) : (
               <div className="relative z-10 text-slate-500">{loadingPair ? 'Loading card...' : 'No card available'}</div>
             )}
           </div>
-          <div className="w-full flex items-center justify-between mt-3">
+          <div className="w-full flex flex-col items-start mt-3">
             <div>
               <div className="font-semibold">{rightMeta?.name}</div>
               <div className="text-sm text-slate-400">{rightMeta?.set_name}</div>
@@ -222,9 +234,12 @@ export default function CommanderGuessGame() {
                 <div className="text-lg text-indigo-400 mt-2">{typeof rightMeta?.rank === 'number' ? `EDHREC Rank #${rightMeta.rank}` : 'EDHREC Rank unavailable'}</div>
               )}
             </div>
-            <div className="flex flex-col items-end gap-2">
-              {!result && <button onClick={() => makeGuess('right')} className="px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500">Pick</button>}
-            </div>
+            {!result && (
+              <button
+                onClick={() => makeGuess('right')}
+                className="mt-6 w-full py-3 text-xl rounded bg-emerald-600 hover:bg-emerald-500 font-bold shadow-lg"
+              >Right</button>
+            )}
           </div>
         </div>
       </div>
@@ -252,7 +267,7 @@ export default function CommanderGuessGame() {
         </>
       )}
 
-      <div className="mt-6 text-sm text-slate-400 max-w-3xl text-center">Guess which commander has the better EDHREC rank. Ties are possible.</div>
+      <div className="mt-6 text-sm text-slate-400 max-w-3xl text-center">Wishlist Vagabones on Steam!</div>
 
     </div>
   );
