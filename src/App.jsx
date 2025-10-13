@@ -52,15 +52,13 @@ function renderManaIcons(cmc, manaCost) {
     </span>
   );
 }
+
 import React, {useEffect, useState, useCallback} from "react";
-// Helper: fetch a random commander card from Scryfall
-async function fetchRandomCommanderFromScryfall() {
-  // Scryfall random endpoint with commander filter
-  const url = "https://api.scryfall.com/cards/random?q=is%3Acommander";
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Scryfall random commander fetch failed");
-  const card = await res.json();
-  // Return card details and images
+import commanders from './commanders.json';
+
+function getRandomCommander() {
+  const idx = Math.floor(Math.random() * commanders.length);
+  const card = commanders[idx];
   return {
     name: card.name,
     set_name: card.set_name,
@@ -145,6 +143,7 @@ export default function CommanderGuessGame() {
   const [loadingPair, setLoadingPair] = useState(false);
   const [userGuess, setUserGuess] = useState(null);
 
+
   const loadNewPair = useCallback(async () => {
     setResult(null);
     setLeftMeta(null);
@@ -153,12 +152,19 @@ export default function CommanderGuessGame() {
     try {
       let left, right, leftRank, rightRank;
       let attempts = 0;
-      // Fetch both cards in parallel, retry if not valid or not distinct
+      // Pick two distinct commanders from the array
       do {
-        const [leftCard, rightCard] = await Promise.all([
-          fetchRandomCommanderFromScryfall(),
-          fetchRandomCommanderFromScryfall()
-        ]);
+        const [leftCard, rightCard] = pickTwoDistinct(commanders).map(card => ({
+          name: card.name,
+          set_name: card.set_name,
+          art: card.image_uris?.art_crop || null,
+          cardImage: card.image_uris?.large || null,
+          scryfall: card,
+          cmc: card.cmc,
+          power: card.power,
+          toughness: card.toughness,
+          oracle_text: card.oracle_text,
+        }));
         left = leftCard;
         right = rightCard;
         // If same name, retry
@@ -178,15 +184,15 @@ export default function CommanderGuessGame() {
 
       // If either still fails, show error
       if (typeof leftRank !== 'number' || typeof rightRank !== 'number' || left.name === right.name) {
-        setLeftMeta({ error: "Failed to fetch valid commander from Scryfall." });
-        setRightMeta({ error: "Failed to fetch valid commander from Scryfall." });
+        setLeftMeta({ error: "Failed to fetch valid commander from list." });
+        setRightMeta({ error: "Failed to fetch valid commander from list." });
       } else {
         setLeftMeta({ ...left, rank: leftRank });
         setRightMeta({ ...right, rank: rightRank });
       }
     } catch (e) {
-      setLeftMeta({ error: "Failed to fetch commander from Scryfall." });
-      setRightMeta({ error: "Failed to fetch commander from Scryfall." });
+      setLeftMeta({ error: "Failed to fetch commander from list." });
+      setRightMeta({ error: "Failed to fetch commander from list." });
     } finally {
       setLoadingPair(false);
     }
