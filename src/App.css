@@ -82,8 +82,3 @@ button:focus-visible {
     var(--tilt-y, rotateY(0deg))
     var(--spin, rotateY(0deg));
 }
-
-.card-spin {
-    transition: transform 1.5s ease-out;
-  --spin: rotateY(360deg);
-}

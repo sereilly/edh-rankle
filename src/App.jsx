@@ -224,7 +224,7 @@ export default function CommanderGuessGame() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white p-6 flex flex-col items-center">
       <h1 className="text-3xl font-bold mb-4">EDH Rankle</h1>
-      <p className="mb-4 text-slate-300 max-w-xl text-center">Guess which commander has a better rank on EDHREC. Ranks are revealed after guessing. Your streak increases for each correct guess and resets to 0 on a wrong guess.</p>
+      <p className="mb-4 text-slate-300 max-w-xl text-center">Guess which commander has a better rank on <a href="https://edhrec.com" target="_blank" rel="noopener noreferrer" className="underline">EDHREC</a>. Ranks are revealed after guessing. Your score increases for each correct guess.</p>
 
       <div className="mb-4 flex items-center gap-4">
         <div className="bg-slate-700 px-4 py-2 rounded">Score: <span className="font-semibold">{streak}</span></div>
@@ -256,7 +256,7 @@ export default function CommanderGuessGame() {
                 <img
                   src={leftMeta.cardImage}
                   alt={leftMeta.name + ' card'}
-                  className={`relative z-10 max-h-80 object-contain shadow-lg card cursor-pointer${userGuess === 'left' && result ? ' card-spin' : ''}`}
+                  className={`relative z-10 max-h-80 object-contain shadow-lg card cursor-pointer}`}
                   style={{borderRadius: '11px'}}
                   onClick={() => !result && !loadingPair && makeGuess('left')}
                   onMouseMove={e => {
@@ -325,7 +325,7 @@ export default function CommanderGuessGame() {
                 <img
                   src={rightMeta.cardImage}
                   alt={rightMeta.name + ' card'}
-                  className={`relative z-10 max-h-80 object-contain shadow-lg card cursor-pointer${userGuess === 'right' && result ? ' card-spin' : ''}`}
+                  className={`relative z-10 max-h-80 object-contain shadow-lg card cursor-pointer`}
                   style={{borderRadius: '11px'}}
                   onClick={() => !result && !loadingPair && makeGuess('right')}
                   onMouseMove={e => {
