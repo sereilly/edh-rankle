@@ -138,6 +138,7 @@ export default function CommanderGuessGame() {
   const [rightMeta, setRightMeta] = useState(null);
   const [streak, setStreak] = useState(0);
   const [lastStreak, setLastStreak] = useState(null);
+  const [highestStreak, setHighestStreak] = useState(0);
   const [result, setResult] = useState(null); // 'left' | 'right' | 'tie' | null
   const [loadingPair, setLoadingPair] = useState(false);
   const [userGuess, setUserGuess] = useState(null);
@@ -204,7 +205,11 @@ export default function CommanderGuessGame() {
     else correct = 'right';
 
     if (correct === side) {
-      setStreak((s) => s + 1);
+      setStreak((s) => {
+        const newStreak = s + 1;
+        if (newStreak > highestStreak) setHighestStreak(newStreak);
+        return newStreak;
+      });
     } else if (correct === 'tie') {
       // treat tie as neither correct nor incorrect — do not change streak
     } else {
@@ -215,10 +220,10 @@ export default function CommanderGuessGame() {
   };
 
   const next = () => {
-    setLeftMeta(null);
-    setRightMeta(null);
-    setUserGuess(null);
-    loadNewPair();
+  setLeftMeta(null);
+  setRightMeta(null);
+  setUserGuess(null);
+  loadNewPair();
   };
 
   return (
@@ -227,7 +232,10 @@ export default function CommanderGuessGame() {
       <p className="mb-4 text-slate-300 max-w-xl text-center">Guess which commander has a better rank on <a href="https://edhrec.com" target="_blank" rel="noopener noreferrer" className="underline">EDHREC</a>. Ranks are revealed after guessing. Your score increases for each correct guess.</p>
 
       <div className="mb-4 flex items-center gap-4">
-        <div className="bg-slate-700 px-4 py-2 rounded">Score: <span className="font-semibold">{streak}</span></div>
+        <div className="bg-slate-700 px-4 py-2 rounded flex items-center gap-3">
+          <span>Score: <span className="font-semibold">{streak}</span></span>
+          <span className="text-slate-400">| Highest: <span className="font-semibold">{highestStreak}</span></span>
+        </div>
         <button className="px-3 py-2 rounded bg-indigo-600 hover:bg-indigo-500" onClick={() => { setStreak(0); next(); }}>New Game</button>
       </div>
 
@@ -388,6 +396,9 @@ export default function CommanderGuessGame() {
               <div className="flex flex-col items-center">
                 <button className="px-5 py-3 rounded bg-red-600 hover:bg-red-500 text-xl font-semibold mb-2" onClick={() => { next(); setLastStreak(null); }}>New Game</button>
                 <div className="text-lg text-slate-300">Final Score: <span className="font-bold">{lastStreak !== null ? lastStreak : streak}</span></div>
+                {(lastStreak !== null ? lastStreak : streak) === highestStreak && highestStreak > 0 && (
+                  <div className="text-green-500 text-lg font-bold mt-1">New Record</div>
+                )}
               </div>
             )}
           </div>
