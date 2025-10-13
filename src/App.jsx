@@ -40,7 +40,8 @@ function renderManaIcons(cmc, manaCost) {
   const symbols = [];
   let match;
   while ((match = symbolRegex.exec(manaCost)) !== null) {
-    symbols.push(match[1]);
+    // Remove forward slash from dual mana symbols
+    symbols.push(match[1].replace(/\//g, ""));
   }
   return (
     <span className="inline-flex items-center">
@@ -49,7 +50,7 @@ function renderManaIcons(cmc, manaCost) {
           key={i}
           src={`https://svgs.scryfall.io/card-symbols/${encodeURIComponent(sym)}.svg`}
           alt={sym}
-          style={{height: '1.2em', display: 'inline'}}
+          style={{height: '1.2em', display: 'inline', paddingLeft: '0.2em'}}
         />
       ))}
     </span>
