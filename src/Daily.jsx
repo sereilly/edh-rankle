@@ -1,5 +1,8 @@
 import wishlistImage from './assets/VagabonesWishlist.png';
 import React, { useState, useEffect } from "react";
+import { DndContext, closestCenter } from '@dnd-kit/core';
+import { SortableContext, arrayMove, useSortable, rectSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import commanders from "./commanders.json";
 import { getFilteredCommanders, fetchEdhrecCommanderRank } from "./App.jsx";
 
@@ -31,7 +34,7 @@ export default function Daily() {
       let x = Math.sin(seed) * 10000;
       return x - Math.floor(x);
     }
-    async function pickValidRankedCommanders(n = 7, maxAttempts = 50) {
+  async function pickValidRankedCommanders(n = 6, maxAttempts = 50) {
       const arr = [...getFilteredCommanders()];
       const result = [];
       let attempts = 0;
@@ -50,7 +53,7 @@ export default function Daily() {
       return result;
     }
     async function pickAndLoadRanks() {
-      const cardsWithRanks = await pickValidRankedCommanders(7);
+      const cardsWithRanks = await pickValidRankedCommanders(6);
       setCommanderList(cardsWithRanks);
       setOrder(cardsWithRanks);
     }
@@ -72,50 +75,56 @@ export default function Daily() {
     };
   }, [order]);
 
-  // Drag and drop handlers
-  const [draggedIdx, setDraggedIdx] = useState(null);
-  // Helper: get indices of incorrect cards
-  function getIncorrectIndices() {
-    return correctPositions.map((isCorrect, idx) => isCorrect ? null : idx).filter(idx => idx !== null);
+  // Dnd-kit drag and drop
+  function handleDragEnd(event) {
+    const { active, over } = event;
+    if (active.id !== over?.id) {
+      // Get indices of incorrect cards
+      const incorrectIndices = order.map((_, idx) => !correctPositions[idx] ? idx : null).filter(idx => idx !== null);
+      // Get current incorrect cards
+      const incorrectCards = incorrectIndices.map(idx => order[idx]);
+      // Find indices in incorrectCards
+      const oldIndex = incorrectCards.findIndex(card => card.id === active.id);
+      const newIndex = incorrectCards.findIndex(card => card.id === over.id);
+      // If either dragged or target card is not incorrect, do nothing
+      if (oldIndex === -1 || newIndex === -1) return;
+      // Reorder incorrect cards
+      const newIncorrectCards = arrayMove(incorrectCards, oldIndex, newIndex);
+      // Merge back into full order, keeping correct cards in place
+      const newOrder = [...order];
+      incorrectIndices.forEach((idx, i) => {
+        newOrder[idx] = newIncorrectCards[i];
+      });
+      setOrder(newOrder);
+    }
   }
 
-  function handleDragStart(idx) {
-    // Before first guess, all cards are draggable
-    if (!correctPositions.length || !correctPositions[idx]) {
-      setDraggedIdx(idx);
-      // Disable horizontal scroll
-      if (scrollRef.current) scrollRef.current.style.overflowX = 'hidden';
-    }
-  }
-  function handleDragOver(idx) {
-    // Before first guess, allow all cards to be reordered
-    if (!correctPositions.length) {
-      if (draggedIdx === null || draggedIdx === idx) return;
-      const newOrder = [...order];
-      const [moved] = newOrder.splice(draggedIdx, 1);
-      newOrder.splice(idx, 0, moved);
-      setOrder(newOrder);
-      setDraggedIdx(idx);
-      return;
-    }
-    // After guess, only allow incorrect cards to be reordered
-    if (draggedIdx === null || draggedIdx === idx || correctPositions[idx]) return;
-    const incorrectIndices = getIncorrectIndices();
-    const draggedIncorrectIdx = incorrectIndices.indexOf(draggedIdx);
-    const overIncorrectIdx = incorrectIndices.indexOf(idx);
-    if (draggedIncorrectIdx === -1 || overIncorrectIdx === -1) return;
-    const incorrectCards = incorrectIndices.map(i => order[i]);
-    const [moved] = incorrectCards.splice(draggedIncorrectIdx, 1);
-    incorrectCards.splice(overIncorrectIdx, 0, moved);
-    const newOrder = [...order];
-    incorrectIndices.forEach((i, k) => { newOrder[i] = incorrectCards[k]; });
-    setOrder(newOrder);
-    setDraggedIdx(idx);
-  }
-  function handleDragEnd() {
-  setDraggedIdx(null);
-  // Re-enable horizontal scroll
-  if (scrollRef.current) scrollRef.current.style.overflowX = 'auto';
+  function SortableCard({ card, idx, isCorrect, isSolved }) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: card.id });
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+      opacity: isDragging ? 0.5 : 1,
+      cursor: !isSolved && !isCorrect ? 'move' : 'default',
+    };
+    // Disable drag listeners/attributes if card is in correct slot
+    const dragProps = !isSolved && !isCorrect ? { ...attributes, ...listeners } : {};
+    return (
+      <div ref={setNodeRef} style={style} {...dragProps} className="flex-1 min-h-[1px] flex flex-col items-center relative">
+        {/* Absolutely positioned label above first card */}
+        {idx === 0 && !isDragging && (
+          <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-green-300 uppercase tracking-wide text-center pointer-events-none" style={{whiteSpace: 'nowrap'}}>Most Popular</span>
+        )}
+        {/* Absolutely positioned label above last card */}
+        {idx === order.length - 1 && !isDragging && (
+          <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-red-300 uppercase tracking-wide text-center pointer-events-none" style={{whiteSpace: 'nowrap'}}>Least Popular</span>
+        )}
+      <img src={card.image_uris.large} alt={card.name} className={`w-full max-h-[500px] object-contain ${isCorrect ? ' card-glow-green' : ''}`} style={{ borderRadius: '6%' }} />
+        {isSolved && (
+          <span className="text-base text-green-400 font-bold">Rank #{card.rank ?? "?"}</span>
+        )}
+      </div>
+    );
   }
 
   function handleGuess() {
@@ -141,99 +150,54 @@ export default function Daily() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white p-6 flex flex-col items-center">
       <h1 className="text-3xl font-bold mb-4 text-center">Daily Ranking Challenge</h1>
-      <p className="mb-4 pb-4 text-slate-300 max-w-xl text-center">
+      <p className="mb-4 text-slate-300 max-w-xl text-center">
         Drag to arrange the commanders from <b>most popular (left)</b> to <b>least popular (right)</b>. Popularity is based on EDHREC rank.
       </p>
 
-      {/* Labels rendered inside first and last card components */}
-      <div className="w-full overflow-x-auto" ref={scrollRef}>
-        <div
-          className={`flex gap-4 mb-6 flex-nowrap pt-6 ${isCentered ? 'justify-center' : 'justify-start'}`}
-        >
-          {order.map((card, idx) => {
-            // Skip rendering if card is undefined or missing image_uris
-            if (!card || !card.image_uris || !card.image_uris.large) return null;
-            const isCorrect = correctPositions[idx];
-            return (
-              <div key={card.id} className="flex flex-col items-center relative min-w-[180px]">
-                {/* Absolutely positioned label above first card */}
-                {idx === 0 && (
-                  <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-green-300 uppercase tracking-wide text-center pointer-events-none" style={{whiteSpace: 'nowrap'}}>Most Popular</span>
-                )}
-                {/* Absolutely positioned label above last card */}
-                {idx === order.length - 1 && (
-                  <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-red-300 uppercase tracking-wide text-center pointer-events-none" style={{whiteSpace: 'nowrap'}}>Least Popular</span>
-                )}
-                <div
-                  className={`bg-slate-900 rounded-lg p-2 flex flex-col items-center ${!isSolved && !isCorrect ? 'cursor-move' : ''}`}
-                  draggable={!isSolved && !isCorrect}
-                  onDragStart={() => { if (!isSolved && !isCorrect) handleDragStart(idx); }}
-                  onDragOver={e => { if (!isSolved && !isCorrect) { e.preventDefault(); handleDragOver(idx); } }}
-                  onDragEnd={handleDragEnd}
-                  onTouchStart={() => { if (!isSolved && !isCorrect) handleDragStart(idx); }}
-                  onTouchMove={e => {
-                    if (!isSolved && !isCorrect) {
-                      const touch = e.touches[0];
-                      // Use scroll position to determine overIdx for horizontal scroll
-                      const container = e.currentTarget.parentNode.parentNode;
-                      const rect = container.getBoundingClientRect();
-                      const x = touch.clientX - rect.left + container.scrollLeft;
-                      const cardWidth = 180; // min-w-[180px]
-                      const overIdx = Math.floor(x / cardWidth);
-                      handleDragOver(overIdx);
-                    }
-                  }}
-                  onTouchEnd={handleDragEnd}
-                  style={{ opacity: draggedIdx === idx ? 0.5 : 1 }}
-                >
-                  <img src={card.image_uris.large} alt={card.name} className={`max-h-64 mb-3 shadow-lg${isCorrect ? ' card-glow-green' : ''}`} style={{ borderRadius: '12px' }} />
-                  <span className="font-semibold text-center mb-2 text-sm md:text-base lg:text-lg">{card.name}</span>
-                  {isSolved && (
-                    <span className="text-base text-green-400 font-bold">Rank #{card.rank ?? "?"}</span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+      {/* Card grid with dnd-kit sortable, no horizontal scroll, fits screen */}
+      <div className="w-full" ref={scrollRef}>
+        <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext
+            items={order.filter((_, idx) => !correctPositions[idx]).map(card => card.id)}
+            strategy={rectSortingStrategy}
+          >
+              <div
+                className="
+                  w-full
+                  flex flex-row flex-wrap
+                  gap-4 mb-6 pt-6
+                "
+              >
+              {order.map((card, idx) => {
+                if (!card || !card.image_uris || !card.image_uris.large) return null;
+                const isCorrect = correctPositions[idx];
+                // Only make incorrect cards sortable
+                if (isCorrect) {
+                  return (
+                    <div key={card.id} className="flex-1 min-h-[1px] flex flex-col items-center relative select-none" style={{ userSelect: 'none' }}>
+                      {idx === 0 && (
+                        <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-green-300 uppercase tracking-wide text-center pointer-events-none" style={{whiteSpace: 'nowrap'}}>Most Popular</span>
+                      )}
+                      {idx === order.length - 1 && (
+                        <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-red-300 uppercase tracking-wide text-center pointer-events-none" style={{whiteSpace: 'nowrap'}}>Least Popular</span>
+                      )}
+                      <img src={card.image_uris.large} alt={card.name} className="w-full max-h-[500px] object-contain mb-3 shadow-lg card-glow-green select-none" style={{ borderRadius: '6%', userSelect: 'none' }} />
+                      {isSolved && (
+                        <span className="text-base text-green-400 font-bold">Rank #{card.rank ?? "?"}</span>
+                      )}
+                    </div>
+                  );
+                } else {
+                  return (
+                    <SortableCard key={card.id} card={card} idx={idx} isCorrect={isCorrect} isSolved={isSolved} />
+                  );
+                }
+              })}
+            </div>
+          </SortableContext>
+        </DndContext>
       </div>
-      {/* Mobile drag-scroll bar with arrows, only if touch is enabled */}
-      {isTouchDevice && (
-        <div
-          className="block md:hidden w-full h-10 bg-slate-700 rounded-full mt-2 mb-4 relative flex items-center"
-          style={{ touchAction: 'none', cursor: 'grab' }}
-          onTouchStart={e => {
-            if (!scrollRef.current) return;
-            scrollRef.current._dragStartX = e.touches[0].clientX;
-            scrollRef.current._dragStartScroll = scrollRef.current.scrollLeft;
-          }}
-          onTouchMove={e => {
-            if (!scrollRef.current || scrollRef.current._dragStartX == null) return;
-            const deltaX = e.touches[0].clientX - scrollRef.current._dragStartX;
-            scrollRef.current.scrollLeft = scrollRef.current._dragStartScroll - deltaX;
-          }}
-          onTouchEnd={e => {
-            if (!scrollRef.current) return;
-            scrollRef.current._dragStartX = null;
-            scrollRef.current._dragStartScroll = null;
-          }}
-        >
-          {/* Left Arrow */}
-          <div className="flex items-center justify-center h-full w-8">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M15 6L9 12L15 18" stroke="#a3a3a3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-          {/* Spacer for center, no oval */}
-          <div className="flex-1"></div>
-          {/* Right Arrow */}
-          <div className="flex items-center justify-center h-full w-8">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M9 6L15 12L9 18" stroke="#a3a3a3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-        </div>
-      )}
+      {/* Removed custom mobile drag-scroll bar to avoid interfering with dnd-kit touch drag-and-drop */}
       <button
         className={`px-4 py-2 rounded mb-4 ${(() => {
           if (isSolved) return 'bg-indigo-600 hover:bg-indigo-500';
