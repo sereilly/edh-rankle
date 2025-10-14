@@ -355,8 +355,18 @@ export default function CommanderGuessGame() {
                   {renderColorIdentity(leftMeta?.scryfall?.color_identity)}
                 </div>
                 <div className="text-sm text-slate-400">{leftMeta?.set_name}</div>
-                <div className="text-xs text-slate-400 flex items-center">Mana Value: {renderManaIcons(leftMeta?.cmc, leftMeta?.scryfall?.mana_cost) || 'N/A'}</div>
+                <div className="text-xs text-slate-400 flex items-center">Mana Cost: {renderManaIcons(leftMeta?.cmc, leftMeta?.scryfall?.mana_cost) || 'N/A'}</div>
                 <div className="text-xs text-slate-400">{leftMeta?.oracle_text}</div>
+                {result && leftMeta?.name && (
+                  <a
+                    href={`https://edhrec.com/commanders/${slugify(leftMeta.name)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 text-indigo-300 underline text-xs"
+                  >
+                    View on EDHREC
+                  </a>
+                )}
               </div>
             )}
           </div>
@@ -426,6 +436,16 @@ export default function CommanderGuessGame() {
                 <div className="text-sm text-slate-400">{rightMeta?.set_name}</div>
                 <div className="text-xs text-slate-400 flex items-center">Mana Value: {renderManaIcons(rightMeta?.cmc, rightMeta?.scryfall?.mana_cost) || 'N/A'}</div>
                 <div className="text-xs text-slate-400">{rightMeta?.oracle_text}</div>
+                {result && rightMeta?.name && (
+                  <a
+                    href={`https://edhrec.com/commanders/${slugify(rightMeta.name)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 text-indigo-300 underline text-xs"
+                  >
+                    View on EDHREC
+                  </a>
+                )}
               </div>
             )}
           </div>
