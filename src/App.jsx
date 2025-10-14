@@ -442,7 +442,7 @@ export default function CommanderGuessGame() {
                   {renderColorIdentity(rightMeta?.scryfall?.color_identity)}
                 </div>
                 <div className="text-sm text-slate-400">{rightMeta?.set_name}</div>
-                <div className="text-xs text-slate-400 flex items-center">Mana Value: {renderManaIcons(rightMeta?.cmc, rightMeta?.scryfall?.mana_cost) || 'N/A'}</div>
+                <div className="text-xs text-slate-400 flex items-center">Mana Cost: {renderManaIcons(rightMeta?.cmc, rightMeta?.scryfall?.mana_cost) || 'N/A'}</div>
                 <div className="text-xs text-slate-400">{rightMeta?.oracle_text}</div>
                 {result && rightMeta?.name && (
                   <a
