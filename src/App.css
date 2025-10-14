@@ -82,8 +82,9 @@ button:focus-visible {
   box-shadow: 0 0 8px 4px #ffd700, 0 0 8px 2px #fff;
 }
 
+/* Reduced glow distance for correct cards */
 .card-glow-green {
-  box-shadow: 0 0 24px 8px #22c55e, 0 0 8px 2px #fff;
+  box-shadow: 0 0 8px 4px #22c55e, 0 0 4px 1px #fff;
   z-index: 20;
 }
 .card-glow-red {

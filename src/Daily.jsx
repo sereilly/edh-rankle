@@ -16,6 +16,8 @@ function getDailySeed() {
   return Number(`${year}${month}${day}`);
 }
 export default function Daily() {
+  // Ref for scroll container
+  const scrollRef = React.useRef(null);
   const [commanderList, setCommanderList] = useState([]);
   const [order, setOrder] = useState([]);
   const [guessHistory, setGuessHistory] = useState([]);
@@ -63,7 +65,11 @@ export default function Daily() {
 
   function handleDragStart(idx) {
     // Before first guess, all cards are draggable
-    if (!correctPositions.length || !correctPositions[idx]) setDraggedIdx(idx);
+    if (!correctPositions.length || !correctPositions[idx]) {
+      setDraggedIdx(idx);
+      // Disable horizontal scroll
+      if (scrollRef.current) scrollRef.current.style.overflowX = 'hidden';
+    }
   }
   function handleDragOver(idx) {
     // Before first guess, allow all cards to be reordered
@@ -91,7 +97,9 @@ export default function Daily() {
     setDraggedIdx(idx);
   }
   function handleDragEnd() {
-    setDraggedIdx(null);
+  setDraggedIdx(null);
+  // Re-enable horizontal scroll
+  if (scrollRef.current) scrollRef.current.style.overflowX = 'auto';
   }
 
   function handleGuess() {
@@ -105,49 +113,61 @@ export default function Daily() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white p-6 flex flex-col items-center">
-      <h1 className="text-3xl font-bold mb-4">Daily Ranking Challenge</h1>
+  <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white p-6 flex flex-col items-center">
+  <h1 className="text-3xl font-bold mb-4 text-center">Daily Ranking Challenge</h1>
   <p className="mb-4 pb-4 text-slate-300 max-w-xl text-center">
         Drag to arrange the commanders from <b>most popular (left)</b> to <b>least popular (right)</b>. Popularity is based on EDHREC rank.
       </p>
 
-      <div className="flex gap-4 mb-6">
-        {order.map((card, idx) => {
-          const isCorrect = correctPositions[idx];
-          return (
-            <div key={card.id} className="flex flex-col items-center relative">
-              {idx === 0 && (
-                <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-green-300 uppercase tracking-wide pointer-events-none">Most Popular</span>
-              )}
-              {idx === order.length - 1 && (
-                <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-red-300 uppercase tracking-wide pointer-events-none">Least Popular</span>
-              )}
-              <div
-                className={`bg-slate-900 rounded-lg p-2 flex flex-col items-center ${isCorrect ? 'card-glow-green' : ''} ${!isSolved && !isCorrect ? 'cursor-move' : ''}`}
-                draggable={!isSolved && !isCorrect}
-                onDragStart={() => { if (!isSolved && !isCorrect) handleDragStart(idx); }}
-                onDragOver={e => { if (!isSolved && !isCorrect) { e.preventDefault(); handleDragOver(idx); } }}
-                onDragEnd={handleDragEnd}
-                onTouchStart={() => { if (!isSolved && !isCorrect) handleDragStart(idx); }}
-                onTouchMove={e => {
-                  if (!isSolved && !isCorrect) {
-                    const touch = e.touches[0];
-                    const overIdx = Math.floor(touch.clientX / (window.innerWidth / order.length));
-                    handleDragOver(overIdx);
-                  }
-                }}
-                onTouchEnd={handleDragEnd}
-                style={{ opacity: draggedIdx === idx ? 0.5 : 1 }}
-              >
-                <img src={card.image_uris?.large} alt={card.name} className="max-h-64 mb-3 shadow-lg" style={{ borderRadius: '12px' }} />
-                <span className="font-semibold text-center mb-2 text-sm md:text-base lg:text-lg">{card.name}</span>
-                {isSolved && (
-                  <span className="text-base text-green-400 font-bold">Rank #{card.rank ?? "?"}</span>
+      {/* Labels rendered inside first and last card components */}
+      <div className="w-full overflow-x-auto" ref={scrollRef}>
+        <div className="flex gap-4 mb-6 flex-nowrap justify-center lg:justify-center pt-6">
+          {order.map((card, idx) => {
+            // Skip rendering if card is undefined or missing image_uris
+            if (!card || !card.image_uris || !card.image_uris.large) return null;
+            const isCorrect = correctPositions[idx];
+            return (
+              <div key={card.id} className="flex flex-col items-center relative min-w-[180px]">
+                {/* Absolutely positioned label above first card */}
+                {idx === 0 && (
+                  <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-green-300 uppercase tracking-wide text-center pointer-events-none" style={{whiteSpace: 'nowrap'}}>Most Popular</span>
                 )}
+                {/* Absolutely positioned label above last card */}
+                {idx === order.length - 1 && (
+                  <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-red-300 uppercase tracking-wide text-center pointer-events-none" style={{whiteSpace: 'nowrap'}}>Least Popular</span>
+                )}
+                <div
+                  className={`bg-slate-900 rounded-lg p-2 flex flex-col items-center ${!isSolved && !isCorrect ? 'cursor-move' : ''}`}
+                  draggable={!isSolved && !isCorrect}
+                  onDragStart={() => { if (!isSolved && !isCorrect) handleDragStart(idx); }}
+                  onDragOver={e => { if (!isSolved && !isCorrect) { e.preventDefault(); handleDragOver(idx); } }}
+                  onDragEnd={handleDragEnd}
+                  onTouchStart={() => { if (!isSolved && !isCorrect) handleDragStart(idx); }}
+                  onTouchMove={e => {
+                    if (!isSolved && !isCorrect) {
+                      const touch = e.touches[0];
+                      // Use scroll position to determine overIdx for horizontal scroll
+                      const container = e.currentTarget.parentNode.parentNode;
+                      const rect = container.getBoundingClientRect();
+                      const x = touch.clientX - rect.left + container.scrollLeft;
+                      const cardWidth = 180; // min-w-[180px]
+                      const overIdx = Math.floor(x / cardWidth);
+                      handleDragOver(overIdx);
+                    }
+                  }}
+                  onTouchEnd={handleDragEnd}
+                  style={{ opacity: draggedIdx === idx ? 0.5 : 1 }}
+                >
+                  <img src={card.image_uris.large} alt={card.name} className={`max-h-64 mb-3 shadow-lg${isCorrect ? ' card-glow-green' : ''}`} style={{ borderRadius: '12px' }} />
+                  <span className="font-semibold text-center mb-2 text-sm md:text-base lg:text-lg">{card.name}</span>
+                  {isSolved && (
+                    <span className="text-base text-green-400 font-bold">Rank #{card.rank ?? "?"}</span>
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
       <button
         className={`px-4 py-2 rounded mb-4 ${(() => {

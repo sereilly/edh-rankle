@@ -283,7 +283,7 @@ export default function CommanderGuessGame() {
         <div className="flex flex-row gap-4 justify-center items-center w-full">
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={includePartner} onChange={e => setIncludePartner(e.target.checked)} />
-            <span className="text-sm">Include Solo Partners</span>
+            <span className="text-sm">Include Partners/Backgrounds</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={includeUnreleased} onChange={e => setIncludeUnreleased(e.target.checked)} />
