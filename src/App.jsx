@@ -144,9 +144,9 @@ export default function CommanderGuessGame() {
   const [loadingPair, setLoadingPair] = useState(false);
   const [userGuess, setUserGuess] = useState(null);
   // Filter toggles
-  const [includePartner, setIncludePartner] = useState(true);
-  const [includeUnreleased, setIncludeUnreleased] = useState(true);
-  const [includeIllegal, setIncludeIllegal] = useState(true);
+  const [includePartner, setIncludePartner] = useState(false);
+  const [includeUnreleased, setIncludeUnreleased] = useState(false);
+  const [includeIllegal, setIncludeIllegal] = useState(false);
 
 
 
@@ -301,7 +301,7 @@ export default function CommanderGuessGame() {
             <div className="w-full h-96 bg-black overflow-hidden flex items-center justify-center relative">
               {/* Rank above card */}
               {result && (
-                <div className="absolute top-2 left-0 w-full flex justify-center z-20">
+                <div className="absolute top-2 left-0 w-full flex justify-center" style={{zIndex: 30}}>
                   <span className="text-4xl font-extrabold text-indigo-300 drop-shadow-lg bg-slate-900 bg-opacity-80 px-4 py-2 rounded">
                     {typeof leftMeta?.rank === 'number' ? `Rank #${leftMeta.rank}` : 'Rank unavailable'}
                   </span>
@@ -317,10 +317,13 @@ export default function CommanderGuessGame() {
                 <img
                   src={leftMeta.cardImage}
                   alt={leftMeta.name + ' card'}
-                  className={`relative z-10 max-h-80 object-contain shadow-lg card cursor-pointer}`}
+                  className={`relative z-10 max-h-80 object-contain shadow-lg card cursor-pointer
+                    ${!result ? 'card-hover-enabled' : ''}
+                    ${result && result !== 'tie' && (result === 'left' ? 'card-glow-green' : 'card-glow-red')}`}
                   style={{borderRadius: '11px'}}
                   onClick={() => !result && !loadingPair && makeGuess('left')}
                   onMouseMove={e => {
+                    if (result) return;
                     const img = e.currentTarget;
                     const rect = img.getBoundingClientRect();
                     const x = e.clientX - rect.left;
@@ -334,6 +337,7 @@ export default function CommanderGuessGame() {
                       img.style.transform = 'perspective(800px) rotateX(var(--rotate-x)) rotateY(var(--rotate-y))';
                   }}
                   onMouseLeave={e => {
+                    if (result) return;
                     e.currentTarget.style.transform = '';
                   }}
                 />
@@ -380,7 +384,7 @@ export default function CommanderGuessGame() {
             <div className="w-full h-96 bg-black overflow-hidden flex items-center justify-center relative">
               {/* Rank above card */}
               {result && (
-                <div className="absolute top-2 left-0 w-full flex justify-center z-20">
+                <div className="absolute top-2 left-0 w-full flex justify-center" style={{zIndex: 30}}>
                   <span className="text-4xl font-extrabold text-indigo-300 drop-shadow-lg bg-slate-900 bg-opacity-80 px-4 py-2 rounded">
                     {typeof rightMeta?.rank === 'number' ? `Rank #${rightMeta.rank}` : 'Rank unavailable'}
                   </span>
@@ -396,10 +400,13 @@ export default function CommanderGuessGame() {
                 <img
                   src={rightMeta.cardImage}
                   alt={rightMeta.name + ' card'}
-                  className={`relative z-10 max-h-80 object-contain shadow-lg card cursor-pointer`}
+                  className={`relative z-10 max-h-80 object-contain shadow-lg card cursor-pointer
+                    ${!result ? 'card-hover-enabled' : ''}
+                    ${result && result !== 'tie' && (result === 'right' ? 'card-glow-green' : 'card-glow-red')}`}
                   style={{borderRadius: '11px'}}
                   onClick={() => !result && !loadingPair && makeGuess('right')}
                   onMouseMove={e => {
+                    if (result) return;
                     const img = e.currentTarget;
                     const rect = img.getBoundingClientRect();
                     const x = e.clientX - rect.left;
@@ -413,6 +420,7 @@ export default function CommanderGuessGame() {
                       img.style.transform = 'perspective(800px) rotateX(var(--rotate-x)) rotateY(var(--rotate-y))';
                   }}
                   onMouseLeave={e => {
+                    if (result) return;
                     e.currentTarget.style.transform = '';
                   }}
                 />

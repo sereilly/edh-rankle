@@ -72,8 +72,19 @@ button:focus-visible {
   }
 }
 
-.card:hover {
+
+
+.card-hover-enabled:hover {
   box-shadow: 0 0 8px 4px #ffd700, 0 0 8px 2px #fff;
+}
+
+.card-glow-green {
+  box-shadow: 0 0 24px 8px #22c55e, 0 0 8px 2px #fff;
+  z-index: 20;
+}
+.card-glow-red {
+  box-shadow: 0 0 24px 8px #ef4444, 0 0 8px 2px #fff;
+  z-index: 20;
 }
 
 .card {
