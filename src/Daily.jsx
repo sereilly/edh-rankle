@@ -16,6 +16,7 @@ function getDailySeed() {
   return Number(`${year}${month}${day}`);
 }
 export default function Daily() {
+  const [isCentered, setIsCentered] = useState(true);
   // Ref for scroll container
   const scrollRef = React.useRef(null);
   const [commanderList, setCommanderList] = useState([]);
@@ -30,7 +31,7 @@ export default function Daily() {
       let x = Math.sin(seed) * 10000;
       return x - Math.floor(x);
     }
-  async function pickValidRankedCommanders(n = 7, maxAttempts = 50) {
+    async function pickValidRankedCommanders(n = 7, maxAttempts = 50) {
       const arr = [...getFilteredCommanders()];
       const result = [];
       let attempts = 0;
@@ -55,6 +56,21 @@ export default function Daily() {
     }
     pickAndLoadRanks();
   }, []);
+
+  // Centering logic runs after cards are loaded
+  useEffect(() => {
+    function updateCentering() {
+      if (scrollRef.current) {
+        const hasOverflow = scrollRef.current.scrollWidth > scrollRef.current.clientWidth;
+        setIsCentered(!hasOverflow);
+      }
+    }
+    updateCentering();
+    window.addEventListener('resize', updateCentering);
+    return () => {
+      window.removeEventListener('resize', updateCentering);
+    };
+  }, [order]);
 
   // Drag and drop handlers
   const [draggedIdx, setDraggedIdx] = useState(null);
@@ -112,16 +128,28 @@ export default function Daily() {
     if (correctness.every(Boolean)) setIsSolved(true);
   }
 
+  // Detect touch capability using window.matchMedia
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(pointer: coarse)');
+    setIsTouchDevice(mq.matches);
+    const handler = e => setIsTouchDevice(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
   return (
-  <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white p-6 flex flex-col items-center">
-  <h1 className="text-3xl font-bold mb-4 text-center">Daily Ranking Challenge</h1>
-  <p className="mb-4 pb-4 text-slate-300 max-w-xl text-center">
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white p-6 flex flex-col items-center">
+      <h1 className="text-3xl font-bold mb-4 text-center">Daily Ranking Challenge</h1>
+      <p className="mb-4 pb-4 text-slate-300 max-w-xl text-center">
         Drag to arrange the commanders from <b>most popular (left)</b> to <b>least popular (right)</b>. Popularity is based on EDHREC rank.
       </p>
 
       {/* Labels rendered inside first and last card components */}
       <div className="w-full overflow-x-auto" ref={scrollRef}>
-        <div className="flex gap-4 mb-6 flex-nowrap justify-center lg:justify-center pt-6">
+        <div
+          className={`flex gap-4 mb-6 flex-nowrap pt-6 ${isCentered ? 'justify-center' : 'justify-start'}`}
+        >
           {order.map((card, idx) => {
             // Skip rendering if card is undefined or missing image_uris
             if (!card || !card.image_uris || !card.image_uris.large) return null;
@@ -169,6 +197,43 @@ export default function Daily() {
           })}
         </div>
       </div>
+      {/* Mobile drag-scroll bar with arrows, only if touch is enabled */}
+      {isTouchDevice && (
+        <div
+          className="block md:hidden w-full h-10 bg-slate-700 rounded-full mt-2 mb-4 relative flex items-center"
+          style={{ touchAction: 'none', cursor: 'grab' }}
+          onTouchStart={e => {
+            if (!scrollRef.current) return;
+            scrollRef.current._dragStartX = e.touches[0].clientX;
+            scrollRef.current._dragStartScroll = scrollRef.current.scrollLeft;
+          }}
+          onTouchMove={e => {
+            if (!scrollRef.current || scrollRef.current._dragStartX == null) return;
+            const deltaX = e.touches[0].clientX - scrollRef.current._dragStartX;
+            scrollRef.current.scrollLeft = scrollRef.current._dragStartScroll - deltaX;
+          }}
+          onTouchEnd={e => {
+            if (!scrollRef.current) return;
+            scrollRef.current._dragStartX = null;
+            scrollRef.current._dragStartScroll = null;
+          }}
+        >
+          {/* Left Arrow */}
+          <div className="flex items-center justify-center h-full w-8">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M15 6L9 12L15 18" stroke="#a3a3a3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          {/* Spacer for center, no oval */}
+          <div className="flex-1"></div>
+          {/* Right Arrow */}
+          <div className="flex items-center justify-center h-full w-8">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 6L15 12L9 18" stroke="#a3a3a3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+        </div>
+      )}
       <button
         className={`px-4 py-2 rounded mb-4 ${(() => {
           if (isSolved) return 'bg-indigo-600 hover:bg-indigo-500';
