@@ -133,6 +133,7 @@ function pickTwoDistinct(arr) {
   return [arr[a], arr[b]];
 }
 
+
 export default function CommanderGuessGame() {
   const [leftMeta, setLeftMeta] = useState(null);
   const [rightMeta, setRightMeta] = useState(null);
@@ -142,7 +143,26 @@ export default function CommanderGuessGame() {
   const [result, setResult] = useState(null); // 'left' | 'right' | 'tie' | null
   const [loadingPair, setLoadingPair] = useState(false);
   const [userGuess, setUserGuess] = useState(null);
+  // Filter toggles
+  const [includePartner, setIncludePartner] = useState(true);
+  const [includeUnreleased, setIncludeUnreleased] = useState(true);
+  const [includeIllegal, setIncludeIllegal] = useState(true);
 
+
+
+  // Helper: filter commanders based on toggles
+  function getFilteredCommanders() {
+    const now = new Date();
+    return commanders.filter(card => {
+      // Partner filter
+      if (!includePartner && Array.isArray(card.keywords) && card.keywords.includes("Partner")) return false;
+      // Unreleased filter
+      if (!includeUnreleased && card.released_at && new Date(card.released_at) > now) return false;
+      // Illegal filter
+      if (!includeIllegal && card.legalities && card.legalities.commander !== "legal") return false;
+      return true;
+    });
+  }
 
   const loadNewPair = useCallback(async () => {
     setResult(null);
@@ -152,9 +172,16 @@ export default function CommanderGuessGame() {
     try {
       let left, right, leftRank, rightRank;
       let attempts = 0;
-      // Pick two distinct commanders from the array
+      // Pick two distinct commanders from the filtered array
+      const filtered = getFilteredCommanders();
+      if (!filtered || filtered.length < 2) {
+        setLeftMeta({ error: "Not enough commanders match the filters." });
+        setRightMeta({ error: "Not enough commanders match the filters." });
+        setLoadingPair(false);
+        return;
+      }
       do {
-        const [leftCard, rightCard] = pickTwoDistinct(commanders).map(card => ({
+        const [leftCard, rightCard] = pickTwoDistinct(filtered).map(card => ({
           name: card.name,
           set_name: card.set_name,
           art: card.image_uris?.art_crop || null,
@@ -196,7 +223,7 @@ export default function CommanderGuessGame() {
     } finally {
       setLoadingPair(false);
     }
-  }, []);
+  }, [includePartner, includeUnreleased, includeIllegal]);
 
   useEffect(() => {
     loadNewPair();
@@ -234,17 +261,35 @@ export default function CommanderGuessGame() {
   loadNewPair();
   };
 
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white p-6 flex flex-col items-center">
       <h1 className="text-3xl font-bold mb-4">EDH Rankle</h1>
       <p className="mb-4 text-slate-300 max-w-xl text-center">Guess which commander has a better rank on <a href="https://edhrec.com" target="_blank" rel="noopener noreferrer" className="underline">EDHREC</a>. Ranks are revealed after guessing. Your score increases for each correct guess.</p>
 
-      <div className="mb-4 flex items-center gap-4">
-        <div className="bg-slate-700 px-4 py-2 rounded flex items-center gap-3">
-          <span>Score: <span className="font-semibold">{streak}</span></span>
-          <span className="text-slate-400">| Highest: <span className="font-semibold">{highestStreak}</span></span>
+      <div className="mb-4 flex flex-col items-center gap-2 w-full">
+        <div className="flex items-center gap-4 mb-2">
+          <div className="bg-slate-700 px-4 py-2 rounded flex items-center gap-3">
+            <span>Score: <span className="font-semibold">{streak}</span></span>
+            <span className="text-slate-400">| Highest: <span className="font-semibold">{highestStreak}</span></span>
+          </div>
+          <button className="px-3 py-2 rounded bg-indigo-600 hover:bg-indigo-500" onClick={() => { setStreak(0); next(); }}>New Game</button>
         </div>
-        <button className="px-3 py-2 rounded bg-indigo-600 hover:bg-indigo-500" onClick={() => { setStreak(0); next(); }}>New Game</button>
+        {/* Filter toggles row */}
+        <div className="flex flex-row gap-4 justify-center items-center w-full">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={includePartner} onChange={e => setIncludePartner(e.target.checked)} />
+            <span className="text-sm">Include Solo Partners</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={includeUnreleased} onChange={e => setIncludeUnreleased(e.target.checked)} />
+            <span className="text-sm">Include Unreleased</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={includeIllegal} onChange={e => setIncludeIllegal(e.target.checked)} />
+            <span className="text-sm">Include Illegal</span>
+          </label>
+        </div>
       </div>
 
       <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6">
