@@ -262,7 +262,7 @@ export default function CommanderGuessGame() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white p-6 flex flex-col items-center">
-      <div className="w-full flex justify-center mb-4">
+      <div className="w-full flex justify-center mb-4 hidden sm:flex">
         <div className="bg-indigo-700 text-white px-6 py-3 rounded shadow-lg text-lg font-semibold">
           Try out the new{' '}
           <Link to="/daily" className="underline text-yellow-300 hover:text-yellow-400">Daily Challenge!</Link>

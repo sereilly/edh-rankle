@@ -149,9 +149,14 @@ export default function Daily() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white p-6 flex flex-col items-center">
+      {isTouchDevice && (
+        <div className="w-full bg-yellow-400 text-black text-center py-2 mb-4 rounded font-bold text-sm shadow-lg">
+          Mobile is not yet supported. For the best experience, please use a desktop device.
+        </div>
+      )}
       <h1 className="text-3xl font-bold mb-4 text-center">Daily Ranking Challenge</h1>
       <p className="mb-4 text-slate-300 max-w-xl text-center">
-        Drag to arrange the commanders from <b>most popular (left)</b> to <b>least popular (right)</b>. Popularity is based on EDHREC rank.
+        Drag to rearrange the commanders from <b>most popular (left)</b> to <b>least popular (right)</b>. Popularity is based on EDHREC rank.
       </p>
 
       {/* Card grid with dnd-kit sortable, no horizontal scroll, fits screen */}
@@ -174,14 +179,14 @@ export default function Daily() {
                 // Only make incorrect cards sortable
                 if (isCorrect) {
                   return (
-                    <div key={card.id} className="flex-1 min-h-[1px] flex flex-col items-center relative select-none" style={{ userSelect: 'none' }}>
+                    <div key={card.id} className="flex-1 min-h-[1px] flex flex-col items-center relative">
                       {idx === 0 && (
                         <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-green-300 uppercase tracking-wide text-center pointer-events-none" style={{whiteSpace: 'nowrap'}}>Most Popular</span>
                       )}
                       {idx === order.length - 1 && (
                         <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-red-300 uppercase tracking-wide text-center pointer-events-none" style={{whiteSpace: 'nowrap'}}>Least Popular</span>
                       )}
-                      <img src={card.image_uris.large} alt={card.name} className="w-full max-h-[500px] object-contain mb-3 shadow-lg card-glow-green select-none" style={{ borderRadius: '6%', userSelect: 'none' }} />
+                      <img src={card.image_uris.large} alt={card.name} className="w-full max-h-[500px] object-contain mb-3 shadow-lg card-glow-green" style={{ borderRadius: '6%' }} />
                       {isSolved && (
                         <span className="text-base text-green-400 font-bold">Rank #{card.rank ?? "?"}</span>
                       )}
