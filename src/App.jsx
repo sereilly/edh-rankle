@@ -53,7 +53,9 @@ function renderManaIcons(cmc, manaCost) {
   );
 }
 
+
 import React, {useEffect, useState, useCallback} from "react";
+import { Link } from "react-router-dom";
 import commanders from './commanders.json';
 
 function getRandomCommander() {
@@ -92,7 +94,7 @@ import wishlistImage from './assets/VagabonesWishlist.png';
 
 // ...existing code...
 
-function slugify(name) {
+export function slugify(name) {
   // Normalize and remove accents
   return String(name)
     .normalize('NFD')
@@ -133,6 +135,18 @@ function pickTwoDistinct(arr) {
   return [arr[a], arr[b]];
 }
 
+ export function getFilteredCommanders(includePartner = false, includeUnreleased = false, includeIllegal = false) {
+    const now = new Date();
+    return commanders.filter(card => {
+      // Partner/background filter
+      if (!includePartner && Array.isArray(card.keywords) && (card.keywords.includes("Partner") || card.keywords.includes("Choose a background"))) return false;
+      // Unreleased filter
+      if (!includeUnreleased && card.released_at && new Date(card.released_at) > now) return false;
+      // Illegal filter
+      if (!includeIllegal && card.legalities && card.legalities.commander !== "legal") return false;
+      return true;
+    });
+  }
 
 export default function CommanderGuessGame() {
   const [leftMeta, setLeftMeta] = useState(null);
@@ -148,22 +162,6 @@ export default function CommanderGuessGame() {
   const [includeUnreleased, setIncludeUnreleased] = useState(false);
   const [includeIllegal, setIncludeIllegal] = useState(false);
 
-
-
-  // Helper: filter commanders based on toggles
-  function getFilteredCommanders() {
-    const now = new Date();
-    return commanders.filter(card => {
-      // Partner filter
-      if (!includePartner && Array.isArray(card.keywords) && card.keywords.includes("Partner")) return false;
-      // Unreleased filter
-      if (!includeUnreleased && card.released_at && new Date(card.released_at) > now) return false;
-      // Illegal filter
-      if (!includeIllegal && card.legalities && card.legalities.commander !== "legal") return false;
-      return true;
-    });
-  }
-
   const loadNewPair = useCallback(async () => {
     setResult(null);
     setLeftMeta(null);
@@ -173,7 +171,7 @@ export default function CommanderGuessGame() {
       let left, right, leftRank, rightRank;
       let attempts = 0;
       // Pick two distinct commanders from the filtered array
-      const filtered = getFilteredCommanders();
+      const filtered = getFilteredCommanders(includePartner, includeUnreleased, includeIllegal);
       if (!filtered || filtered.length < 2) {
         setLeftMeta({ error: "Not enough commanders match the filters." });
         setRightMeta({ error: "Not enough commanders match the filters." });
@@ -264,6 +262,12 @@ export default function CommanderGuessGame() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white p-6 flex flex-col items-center">
+      <div className="w-full flex justify-center mb-4">
+        <div className="bg-indigo-700 text-white px-6 py-3 rounded shadow-lg text-lg font-semibold">
+          Try out the new{' '}
+          <Link to="/daily" className="underline text-yellow-300 hover:text-yellow-400">Daily Challenge!</Link>
+        </div>
+      </div>
       <h1 className="text-3xl font-bold mb-4">EDH Rankle</h1>
       <p className="mb-4 text-slate-300 max-w-xl text-center">Guess which commander has a better rank on <a href="https://edhrec.com" target="_blank" rel="noopener noreferrer" className="underline">EDHREC</a>. Ranks are revealed after guessing. Your score increases for each correct guess.</p>
 
@@ -513,17 +517,13 @@ function getLatestCommanderRank(json) {
   if (typeof card.rank === 'string') return Number(card.rank);
   return null;
 }
-async function fetchEdhrecCommanderRank(slugOrName) {
+export async function fetchEdhrecCommanderRank(slugOrName) {
   // Always use slugify(name) for EDHREC URL
   const slug = slugify(slugOrName || "");
-  const urlsToTry = [
-    `https://json.edhrec.com/pages/commanders/${encodeURIComponent(slug)}.json`,
-    `https://json.edhrec.com/pages/commanders/${encodeURIComponent(slug)}-1.json`,
-  ];
-  for (const url of urlsToTry) {
+  const url = `https://json.edhrec.com/pages/commanders/${encodeURIComponent(slug)}.json`;
     try {
       const res = await fetch(url);
-      if (!res.ok) continue;
+      if (!res.ok) return null;
       const j = await res.json();
       // Prefer latest rank from rank_over_time if available
       const latestRank = getLatestCommanderRank(j);
@@ -541,8 +541,6 @@ async function fetchEdhrecCommanderRank(slugOrName) {
         }
       }
     } catch (e) {
-      // try next
     }
-  }
   return null;
 }

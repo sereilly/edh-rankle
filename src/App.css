@@ -1,3 +1,7 @@
+/* Green glow for correct cards in Daily.jsx */
+.card-glow-green {
+  box-shadow: 0 0 0 2px #22c55e, 0 0 8px 2px #22c55e66;
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
