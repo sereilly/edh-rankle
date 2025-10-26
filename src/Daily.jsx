@@ -227,7 +227,7 @@ export default function Daily() {
                   `w-full
                   grid grid-cols-2 grid-rows-3
                   gap-4 mb-6 pt-6
-                  md:flex md:flex-row md:flex-wrap`
+                  md:grid md:grid-cols-6 md:grid-rows-1`
                 }
               >
               {order.map((card, idx) => {
