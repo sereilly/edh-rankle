@@ -613,6 +613,12 @@ export default function CommanderGuessGame() {
           <a href="https://store.steampowered.com/app/3157380/Vagabones/" target="_blank" rel="noopener noreferrer" className="underline text-indigo-300">STEAM</a>!
         </span>
       </div>
+      {/* Legal disclaimer */}
+      <div className="w-full text-xs text-slate-400 text-center mt-6 mb-4 max-w-3xl">
+        <small>
+          EDH Rankle is an unofficial, fan-made game and is not affiliated with or endorsed by Wizards of the Coast or EDHREC. All trademarks and copyrights belong to their respective owners.
+        </small>
+      </div>
     </div>
   );
 }
