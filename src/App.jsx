@@ -140,7 +140,16 @@ function pickTwoDistinct(arr) {
     const now = new Date();
     return commanders.filter(card => {
       // Partner/background filter
-      if (!includePartner && Array.isArray(card.keywords) && (card.keywords.includes("Partner") || card.keywords.includes("Choose a background"))) return false;
+        // When partners are excluded, also exclude cards that are "Doctor's companion" or whose type line contains "Time Lord Doctor"
+        if (!includePartner) {
+          const hasKeywords = Array.isArray(card.keywords) && (
+            card.keywords.includes("Partner") ||
+            card.keywords.includes("Choose a background") ||
+            card.keywords.includes("Doctor's companion")
+          );
+          const isTimeLordDoctor = typeof card.type_line === 'string' && card.type_line.includes("Time Lord Doctor");
+          if (hasKeywords || isTimeLordDoctor) return false;
+        }
       // Unreleased filter
       if (!includeUnreleased && card.released_at && new Date(card.released_at) > now) return false;
       // Illegal filter
@@ -300,15 +309,15 @@ export default function CommanderGuessGame() {
         <div className="flex flex-row gap-4 justify-center items-center w-full">
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={includePartner} onChange={e => setIncludePartner(e.target.checked)} />
-            <span className="text-sm">Include Partners/Backgrounds</span>
+            <span className="text-sm">Partners/BGs/Drs.</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={includeUnreleased} onChange={e => setIncludeUnreleased(e.target.checked)} />
-            <span className="text-sm">Include Unreleased</span>
+            <span className="text-sm">Unreleased</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={includeIllegal} onChange={e => setIncludeIllegal(e.target.checked)} />
-            <span className="text-sm">Include Illegal</span>
+            <span className="text-sm">Banned</span>
           </label>
         </div>
       </div>
