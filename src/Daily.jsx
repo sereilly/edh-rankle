@@ -2,7 +2,7 @@ import wishlistImage from './assets/VagabonesWishlist.png';
 import React, { useState, useEffect } from "react";
 import { useLocation } from 'react-router-dom';
 import { pageview } from './gtag';
-import { DndContext, closestCenter } from '@dnd-kit/core';
+import { DndContext, closestCenter, useSensor, useSensors, PointerSensor, TouchSensor } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable, rectSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import commanders from "./commanders.json";
@@ -134,6 +134,8 @@ export default function Daily() {
       transition,
       opacity: isDragging ? 0.5 : 1,
       cursor: !isSolved && !isCorrect ? 'move' : 'default',
+      // Prevent browser default touch gestures while dragging on touch devices
+      touchAction: 'none',
     };
     // Disable drag listeners/attributes if card is in correct slot
     const dragProps = !isSolved && !isCorrect ? { ...attributes, ...listeners } : {};
@@ -175,13 +177,14 @@ export default function Daily() {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
+  // Configure dnd-kit sensors to include touch support (mobile)
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white p-6 flex flex-col items-center">
-      {isTouchDevice && (
-        <div className="w-full bg-yellow-400 text-black text-center py-2 mb-4 rounded font-bold text-sm shadow-lg">
-          Mobile is not yet supported. For the best experience, please use a desktop device.
-        </div>
-      )}
       <h1 className="text-3xl font-bold mb-4 text-center">Daily Ranking Challenge</h1>
       <p className="mb-4 text-slate-300 max-w-xl text-center">
         Drag to rearrange the commanders from <b>most popular (left)</b> to <b>least popular (right)</b>. Popularity is based on EDHREC rank.
@@ -189,7 +192,7 @@ export default function Daily() {
 
       {/* Card grid with dnd-kit sortable, no horizontal scroll, fits screen */}
       <div className="w-full" ref={scrollRef}>
-        <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext
             items={order.filter((_, idx) => !correctPositions[idx]).map(card => card.id)}
             strategy={rectSortingStrategy}
