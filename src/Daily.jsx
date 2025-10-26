@@ -142,9 +142,11 @@ export default function Daily() {
     return (
       <div ref={setNodeRef} style={style} {...dragProps} className="w-full flex flex-col items-center relative">
         {/* Ranking badge (position in current order) */}
-        <div className="absolute bottom-2 z-50 w-6 h-6 rounded-full bg-indigo-600/60 text-white flex items-center justify-center font-bold text-sm shadow-lg pointer-events-none">
-          {idx + 1}
-        </div>
+        {!isSolved && (
+          <div className="absolute bottom-2 z-50 w-6 h-6 rounded-full bg-indigo-600/60 text-white flex items-center justify-center font-bold text-sm shadow-lg pointer-events-none">
+            {idx + 1}
+          </div>
+        )}
         {/* Absolutely positioned label above first card */}
         {idx === 0 && !isDragging && (
           <span className="hidden md:block absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-green-300 uppercase tracking-wide text-center pointer-events-none" style={{whiteSpace: 'nowrap'}}>Most Popular</span>
@@ -165,9 +167,11 @@ export default function Daily() {
     return (
       <div className="w-full flex flex-col items-center relative">
         {/* Ranking badge (position in current order) */}
-        <div className="absolute bottom-2 z-50 w-6 h-6 rounded-full bg-indigo-600/60 text-white flex items-center justify-center font-bold text-sm shadow-lg pointer-events-none">
-          {idx + 1}
-        </div>
+        {!isSolved && (
+          <div className="absolute bottom-2 z-50 w-6 h-6 rounded-full bg-indigo-600/60 text-white flex items-center justify-center font-bold text-sm shadow-lg pointer-events-none">
+            {idx + 1}
+          </div>
+        )}
         {idx === 0 && (
           <span className="hidden md:block absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-green-300 uppercase tracking-wide text-center pointer-events-none" style={{whiteSpace: 'nowrap'}}>Most Popular</span>
         )}
