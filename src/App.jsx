@@ -63,10 +63,12 @@ function getRandomCommander() {
   const idx = Math.floor(Math.random() * commanders.length);
   const card = commanders[idx];
   return {
-    name: card.name,
+    // Use front face name for double-faced / transform cards when available
+    name: card.card_faces?.[0]?.name || card.name,
     set_name: card.set_name,
-    art: card.image_uris?.art_crop || null,
-    cardImage: card.image_uris?.large || null,
+    // Support transform / double-faced cards: prefer image_uris, otherwise fall back to first face
+    art: card.image_uris?.art_crop || card.card_faces?.[0]?.image_uris?.art_crop || null,
+    cardImage: card.image_uris?.large || card.card_faces?.[0]?.image_uris?.large || null,
     scryfall: card,
     cmc: card.cmc,
     power: card.power,
@@ -106,28 +108,6 @@ export function slugify(name) {
     .replace(/^-+|-+$/g, "");
 }
 
-async function fetchScryfallArtForName(name) {
-  // Use Scryfall named endpoint. If double-faced, pick first face art.
-  const url = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(name)}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Scryfall fetch failed");
-  const j = await res.json();
-  // Prefer art_crop when available; otherwise use large or normal.
-  const getArt = (card) => {
-    if (card.image_uris && card.image_uris.art_crop) return card.image_uris.art_crop;
-    if (card.card_faces && card.card_faces[0] && card.card_faces[0].image_uris && card.card_faces[0].image_uris.art_crop)
-      return card.card_faces[0].image_uris.art_crop;
-    if (card.image_uris && card.image_uris.large) return card.image_uris.large;
-    if (card.card_faces && card.card_faces[0] && card.card_faces[0].image_uris && card.card_faces[0].image_uris.large)
-      return card.card_faces[0].image_uris.large;
-    // Last resort use svg or png
-    if (card.image_uris && card.image_uris.png) return card.image_uris.png;
-    return null;
-  };
-  const art = getArt(j);
-  return { art, scryfall: j };
-}
-
 function pickTwoDistinct(arr) {
   if (!arr || arr.length < 2) return null;
   const a = Math.floor(Math.random() * arr.length);
@@ -136,7 +116,7 @@ function pickTwoDistinct(arr) {
   return [arr[a], arr[b]];
 }
 
- export function getFilteredCommanders(includePartner = false, includeUnreleased = false, includeIllegal = false) {
+ export function getFilteredCommanders(includePartner = false, includeUnreleased = false, includeIllegal = false, includeTransform = false) {
     const now = new Date();
     return commanders.filter(card => {
       // Partner/background filter
@@ -150,7 +130,12 @@ function pickTwoDistinct(arr) {
           const isTimeLordDoctor = typeof card.type_line === 'string' && card.type_line.includes("Time Lord Doctor");
           if (hasKeywords || isTimeLordDoctor) return false;
         }
-      // Unreleased filter
+        // Transform filter: when enabled, only include cards that list the "Transform" keyword
+        if (includeTransform) {
+          const hasTransform = Array.isArray(card.keywords) && card.keywords.includes("Transform");
+          if (!hasTransform) return false;
+        }
+        // Unreleased filter
       if (!includeUnreleased && card.released_at && new Date(card.released_at) > now) return false;
       // Illegal filter
       if (!includeIllegal && card.legalities && card.legalities.commander !== "legal") return false;
@@ -176,6 +161,7 @@ export default function CommanderGuessGame() {
   const [includePartner, setIncludePartner] = useState(false);
   const [includeUnreleased, setIncludeUnreleased] = useState(false);
   const [includeIllegal, setIncludeIllegal] = useState(false);
+  const [includeTransform, setIncludeTransform] = useState(false);
 
   const loadNewPair = useCallback(async () => {
     setResult(null);
@@ -185,8 +171,8 @@ export default function CommanderGuessGame() {
     try {
       let left, right, leftRank, rightRank;
       let attempts = 0;
-      // Pick two distinct commanders from the filtered array
-      const filtered = getFilteredCommanders(includePartner, includeUnreleased, includeIllegal);
+  // Pick two distinct commanders from the filtered array
+  const filtered = getFilteredCommanders(includePartner, includeUnreleased, includeIllegal, includeTransform);
       if (!filtered || filtered.length < 2) {
         setLeftMeta({ error: "Not enough commanders match the filters." });
         setRightMeta({ error: "Not enough commanders match the filters." });
@@ -195,10 +181,12 @@ export default function CommanderGuessGame() {
       }
       do {
         const [leftCard, rightCard] = pickTwoDistinct(filtered).map(card => ({
-          name: card.name,
+          // Use front-face name for transformed/double-faced cards so EDHREC URLs match
+          name: card.card_faces?.[0]?.name || card.name,
           set_name: card.set_name,
-          art: card.image_uris?.art_crop || null,
-          cardImage: card.image_uris?.large || null,
+          // Support transform / double-faced cards: prefer image_uris, otherwise fall back to first face
+          art: card.image_uris?.art_crop || card.card_faces?.[0]?.image_uris?.art_crop || null,
+          cardImage: card.image_uris?.large || card.card_faces?.[0]?.image_uris?.large || null,
           scryfall: card,
           cmc: card.cmc,
           power: card.power,
@@ -236,7 +224,7 @@ export default function CommanderGuessGame() {
     } finally {
       setLoadingPair(false);
     }
-  }, [includePartner, includeUnreleased, includeIllegal]);
+  }, [includePartner, includeUnreleased, includeIllegal, includeTransform]);
 
   useEffect(() => {
     loadNewPair();
@@ -318,6 +306,10 @@ export default function CommanderGuessGame() {
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={includeIllegal} onChange={e => setIncludeIllegal(e.target.checked)} />
             <span className="text-sm">Banned</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={includeTransform} onChange={e => setIncludeTransform(e.target.checked)} />
+            <span className="text-sm">Transform</span>
           </label>
         </div>
       </div>
