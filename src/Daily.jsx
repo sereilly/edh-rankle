@@ -231,9 +231,9 @@ export default function Daily() {
           </Link>
         </div>
       </nav>
-      <h1 className="text-3xl font-bold mb-4 text-center">Daily Ranking Challenge</h1>
+      <h1 className="text-3xl font-bold mb-4 text-center">Daily Challenge</h1>
       <p className="mb-4 text-slate-300 max-w-xl text-center">
-        Drag to rearrange the commanders from <b>most popular (left)</b> to <b>least popular (right)</b>. Popularity is based on EDHREC rank.
+        Drag to rank the commanders from <b>most popular</b> to <b>least popular</b>. Popularity is based on EDHREC rank.
       </p>
 
       {/* Card grid with dnd-kit sortable, no horizontal scroll, fits screen */}
