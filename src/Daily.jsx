@@ -1,5 +1,7 @@
 import wishlistImage from './assets/VagabonesWishlist.png';
 import React, { useState, useEffect } from "react";
+import { useLocation } from 'react-router-dom';
+import { pageview } from './gtag';
 import { DndContext, closestCenter } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable, rectSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -20,6 +22,11 @@ function getDailySeed() {
 }
 
 export default function Daily() {
+  // Track page view when Daily route is visited
+  const location = useLocation();
+  useEffect(() => {
+    try { pageview(location.pathname + (location.search || '')); } catch (e) {}
+  }, [location]);
   const [isCentered, setIsCentered] = useState(true);
   // Ref for scroll container
   const scrollRef = React.useRef(null);

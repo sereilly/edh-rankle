@@ -55,8 +55,9 @@ function renderManaIcons(cmc, manaCost) {
 
 
 import React, {useEffect, useState, useCallback} from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import commanders from './commanders.json';
+import { pageview } from './gtag';
 
 function getRandomCommander() {
   const idx = Math.floor(Math.random() * commanders.length);
@@ -149,6 +150,11 @@ function pickTwoDistinct(arr) {
   }
 
 export default function CommanderGuessGame() {
+  // Send a pageview on mount and whenever the route changes (SPA navigation)
+  const location = useLocation();
+  useEffect(() => {
+    try { pageview(location.pathname + (location.search || '')); } catch (e) {}
+  }, [location]);
   const [leftMeta, setLeftMeta] = useState(null);
   const [rightMeta, setRightMeta] = useState(null);
   const [streak, setStreak] = useState(0);
