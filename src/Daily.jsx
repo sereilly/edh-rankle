@@ -147,11 +147,11 @@ export default function Daily() {
         </div>
         {/* Absolutely positioned label above first card */}
         {idx === 0 && !isDragging && (
-          <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-green-300 uppercase tracking-wide text-center pointer-events-none" style={{whiteSpace: 'nowrap'}}>Most Popular</span>
+          <span className="hidden md:block absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-green-300 uppercase tracking-wide text-center pointer-events-none" style={{whiteSpace: 'nowrap'}}>Most Popular</span>
         )}
         {/* Absolutely positioned label above last card */}
         {idx === order.length - 1 && !isDragging && (
-          <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-red-300 uppercase tracking-wide text-center pointer-events-none" style={{whiteSpace: 'nowrap'}}>Least Popular</span>
+          <span className="hidden md:block absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-red-300 uppercase tracking-wide text-center pointer-events-none" style={{whiteSpace: 'nowrap'}}>Least Popular</span>
         )}
       <img src={card.image_uris.large} alt={card.name} className={`w-full max-h-[500px] object-contain ${isCorrect ? ' card-glow-green' : ''}`} style={{ borderRadius: '6%' }} />
         {isSolved && (
@@ -169,10 +169,10 @@ export default function Daily() {
           {idx + 1}
         </div>
         {idx === 0 && (
-          <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-green-300 uppercase tracking-wide text-center pointer-events-none" style={{whiteSpace: 'nowrap'}}>Most Popular</span>
+          <span className="hidden md:block absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-green-300 uppercase tracking-wide text-center pointer-events-none" style={{whiteSpace: 'nowrap'}}>Most Popular</span>
         )}
         {idx === order.length - 1 && (
-          <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-red-300 uppercase tracking-wide text-center pointer-events-none" style={{whiteSpace: 'nowrap'}}>Least Popular</span>
+          <span className="hidden md:block absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-red-300 uppercase tracking-wide text-center pointer-events-none" style={{whiteSpace: 'nowrap'}}>Least Popular</span>
         )}
         <img src={card.image_uris.large} alt={card.name} className="w-full max-h-[500px] object-contain mb-3 shadow-lg card-glow-green" style={{ borderRadius: '6%' }} />
         {isSolved && (
