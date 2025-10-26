@@ -1,7 +1,7 @@
 import wishlistImage from './assets/VagabonesWishlist.png';
 import React, { useState, useEffect } from "react";
 import { useLocation } from 'react-router-dom';
-import { pageview } from './gtag';
+import { pageview } from './analytics';
 import { DndContext, closestCenter, useSensor, useSensors, PointerSensor, TouchSensor } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable, rectSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';

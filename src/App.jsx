@@ -57,7 +57,7 @@ function renderManaIcons(cmc, manaCost) {
 import React, {useEffect, useState, useCallback} from "react";
 import { Link, useLocation } from "react-router-dom";
 import commanders from './commanders.json';
-import { pageview } from './gtag';
+import { pageview } from './analytics';
 
 function getRandomCommander() {
   const idx = Math.floor(Math.random() * commanders.length);
