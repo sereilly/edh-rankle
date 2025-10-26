@@ -18,6 +18,7 @@ function getDailySeed() {
   const day = now.getUTCDate().toString().padStart(2, '0');
   return Number(`${year}${month}${day}`);
 }
+
 export default function Daily() {
   const [isCentered, setIsCentered] = useState(true);
   // Ref for scroll container
@@ -29,31 +30,51 @@ export default function Daily() {
   const [correctPositions, setCorrectPositions] = useState([]);
 
   useEffect(() => {
-    // Seeded random function
-    function seededRandom(seed) {
-      let x = Math.sin(seed) * 10000;
-      return x - Math.floor(x);
+    // Deterministic seeded RNG (mulberry32) and shuffle for sampling without replacement
+    function mulberry32(seed) {
+      let t = seed >>> 0;
+      return function() {
+        t += 0x6D2B79F5;
+        let r = Math.imul(t ^ (t >>> 15), t | 1);
+        r ^= r + Math.imul(r ^ (r >>> 7), r | 61);
+        return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+      };
     }
-  async function pickValidRankedCommanders(n = 6, maxAttempts = 50) {
-      const arr = [...getFilteredCommanders()];
+
+    function seededShuffle(array, seed) {
+      const rng = mulberry32(Number(String(seed).slice(-9)));
+      const a = [...array];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    async function pickValidRankedCommanders(n = 6, maxAttempts = 200) {
+      const pool = [...getFilteredCommanders()];
+      const dateSeed = getDailySeed(); // base seed derived from the date
+      // Shuffle once deterministically based on today's seed
+      const shuffled = seededShuffle(pool, dateSeed);
       const result = [];
-      let attempts = 0;
-      const seedBase = getDailySeed();
-      while (result.length < n && arr.length && attempts < maxAttempts) {
-        // Use seeded random for deterministic daily selection
-        const idx = Math.floor(seededRandom(seedBase + attempts) * arr.length);
-        const card = arr[idx];
-        arr.splice(idx, 1);
+      const seenIds = new Set();
+      let idx = 0;
+      // Walk the shuffled list and collect the first n valid ranked commanders
+      while (result.length < n && idx < shuffled.length && idx < maxAttempts) {
+        const card = shuffled[idx];
+        idx++;
+        if (!card || seenIds.has(card.id)) continue;
         const rank = await fetchEdhrecCommanderRank(card.name);
         if (typeof rank === 'number' && rank > 0) {
           result.push({ ...card, rank });
+          seenIds.add(card.id);
         }
-        attempts++;
       }
       return result;
     }
     async function pickAndLoadRanks() {
       const cardsWithRanks = await pickValidRankedCommanders(6);
+      console.log("Daily commanders:", cardsWithRanks);
       setCommanderList(cardsWithRanks);
       setOrder(cardsWithRanks);
     }
