@@ -73,12 +73,13 @@ function getRandomCommander() {
     cmc: card.cmc,
     power: card.power,
     toughness: card.toughness,
-    oracle_text: card.oracle_text,
+    // Prefer front-face oracle text for double-faced / transform cards so description shows correctly
+    oracle_text: card.card_faces?.[0]?.oracle_text || card.oracle_text,
   };
 }
 
 import wishlistImage from './assets/VagabonesWishlist.png';
-import flipImage from './assets/flip.png';
+import flipIcon from './assets/flip.png';
 
 // EDHREC Commander Rank Guessing Game
 // Single-file React component. Default export at bottom.
@@ -198,7 +199,8 @@ export default function CommanderGuessGame() {
           cmc: card.cmc,
           power: card.power,
           toughness: card.toughness,
-          oracle_text: card.oracle_text,
+          // Prefer front-face oracle text when available. We'll show the back face text when the card is flipped in the UI.
+          oracle_text: card.card_faces?.[0]?.oracle_text || card.oracle_text,
         }));
         left = leftCard;
         right = rightCard;
@@ -323,9 +325,7 @@ export default function CommanderGuessGame() {
         </div>
       </div>
 
-  {/* Determine flip-layout flags so we can treat layout:"flip" cards differently */}
-  { /* eslint-disable-next-line no-unused-vars */ }
-  <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Left */}
         <div
           className="bg-slate-900 rounded-lg p-4 flex flex-col justify-between items-center"
@@ -342,14 +342,9 @@ export default function CommanderGuessGame() {
               )}
               {/* Art as semi-transparent background */}
               {leftMeta && leftMeta.art && (
-                <img
-                  src={(leftFlipped && leftMeta?.scryfall?.layout !== 'flip' && leftMeta?.scryfall?.card_faces?.[1]?.image_uris?.art_crop)
-                    ? leftMeta.scryfall.card_faces[1].image_uris.art_crop
-                    : leftMeta.art}
+                <img src={(leftFlipped && leftMeta?.scryfall?.card_faces?.[1]?.image_uris?.art_crop) ? leftMeta.scryfall.card_faces[1].image_uris.art_crop : leftMeta.art}
                   alt={leftMeta.name + ' art'}
-                  className="absolute inset-0 w-full h-full object-cover opacity-40"
-                  style={{zIndex: 1, transform: (leftFlipped && leftMeta?.scryfall?.layout === 'flip') ? 'rotate(180deg)' : undefined}}
-                />
+                  className="absolute inset-0 w-full h-full object-cover opacity-40" style={{zIndex: 1}} />
               )}
               {/* Flip control for double-faced / transform cards */}
               {leftMeta?.scryfall?.card_faces?.length > 1 && (
@@ -359,22 +354,21 @@ export default function CommanderGuessGame() {
                     className="pointer-events-auto bg-black bg-opacity-60 text-white text-sm px-3 py-2 rounded"
                     aria-pressed={leftFlipped}
                   >
-                    <img src={flipImage} alt={leftFlipped ? 'Front' : 'Flip'} className="h-6 w-auto" />
+                    <img src={flipIcon} alt="Flip" className="inline-block h-5" />
                   </button>
                 </div>
               )}
               {/* Card image in foreground */}
               {leftMeta && leftMeta.cardImage ? (
                 <img
-                  // For layout:"flip" cards we always use the front image and rotate it 180deg when flipped.
-                  src={(leftFlipped && leftMeta?.scryfall?.layout !== 'flip' && leftMeta?.scryfall?.card_faces?.[1]?.image_uris?.large)
+                  src={(leftFlipped && leftMeta?.scryfall?.card_faces?.[1]?.image_uris?.large)
                     ? leftMeta.scryfall.card_faces[1].image_uris.large
                     : leftMeta.cardImage}
                   alt={leftMeta.name + ' card'}
                   className={`relative z-10 max-h-80 object-contain shadow-lg card cursor-pointer
                     ${!result ? 'card-hover-enabled' : ''}
                     ${result && result !== 'tie' && (result === 'left' ? 'card-glow-green' : 'card-glow-red')}`}
-                  style={{borderRadius: '11px', transform: (leftFlipped && leftMeta?.scryfall?.layout === 'flip') ? 'perspective(800px) rotateZ(180deg)' : undefined}}
+                  style={{borderRadius: '11px'}}
                   onClick={() => !result && !loadingPair && makeGuess('left')}
                   onMouseMove={e => {
                     if (result) return;
@@ -388,11 +382,11 @@ export default function CommanderGuessGame() {
                     const rotateY = ((x - centerX) / centerX) * 10;
                       img.style.setProperty('--rotate-x', `${rotateX}deg`);
                       img.style.setProperty('--rotate-y', `${rotateY}deg`);
-                      img.style.transform = 'perspective(800px) rotateX(var(--rotate-x)) rotateY(var(--rotate-y))' + ((leftFlipped && leftMeta?.scryfall?.layout === 'flip') ? ' rotateZ(180deg)' : '');
+                      img.style.transform = 'perspective(800px) rotateX(var(--rotate-x)) rotateY(var(--rotate-y))';
                   }}
                   onMouseLeave={e => {
                     if (result) return;
-                    e.currentTarget.style.transform = (leftFlipped && leftMeta?.scryfall?.layout === 'flip') ? 'perspective(800px) rotateZ(180deg)' : '';
+                    e.currentTarget.style.transform = '';
                   }}
                 />
               ) : (
@@ -414,7 +408,12 @@ export default function CommanderGuessGame() {
                 </div>
                 <div className="text-sm text-slate-400">{leftMeta?.set_name}</div>
                 <div className="text-xs text-slate-400 flex items-center">Mana Cost: {renderManaIcons(leftMeta?.cmc, leftMeta?.scryfall?.mana_cost) || 'N/A'}</div>
-                <div className="text-xs text-slate-400">{leftMeta?.oracle_text}</div>
+                <div className="text-xs text-slate-400">
+                  {leftFlipped
+                    ? (leftMeta?.scryfall?.card_faces?.[1]?.oracle_text || leftMeta?.oracle_text)
+                    : (leftMeta?.scryfall?.card_faces?.[0]?.oracle_text || leftMeta?.oracle_text)
+                  }
+                </div>
                 {result && leftMeta?.name && (
                   <a
                     href={`https://edhrec.com/commanders/${slugify(leftMeta.name)}`}
@@ -446,14 +445,9 @@ export default function CommanderGuessGame() {
               )}
               {/* Art as semi-transparent background */}
               {rightMeta && rightMeta.art && (
-                <img
-                  src={(rightFlipped && rightMeta?.scryfall?.layout !== 'flip' && rightMeta?.scryfall?.card_faces?.[1]?.image_uris?.art_crop)
-                    ? rightMeta.scryfall.card_faces[1].image_uris.art_crop
-                    : rightMeta.art}
+                <img src={(rightFlipped && rightMeta?.scryfall?.card_faces?.[1]?.image_uris?.art_crop) ? rightMeta.scryfall.card_faces[1].image_uris.art_crop : rightMeta.art}
                   alt={rightMeta.name + ' art'}
-                  className="absolute inset-0 w-full h-full object-cover opacity-40"
-                  style={{zIndex: 1, transform: (rightFlipped && rightMeta?.scryfall?.layout === 'flip') ? 'rotate(180deg)' : undefined}}
-                />
+                  className="absolute inset-0 w-full h-full object-cover opacity-40" style={{zIndex: 1}} />
               )}
               {/* Flip control for double-faced / transform cards */}
               {rightMeta?.scryfall?.card_faces?.length > 1 && (
@@ -463,22 +457,21 @@ export default function CommanderGuessGame() {
                     className="pointer-events-auto bg-black bg-opacity-60 text-white text-sm px-3 py-2 rounded"
                     aria-pressed={rightFlipped}
                   >
-                    <img src={flipImage} alt={rightFlipped ? 'Front' : 'Flip'} className="h-6 w-auto" />
+                    <img src={flipIcon} alt="Flip" className="inline-block h-5" />
                   </button>
                 </div>
               )}
               {/* Card image in foreground */}
               {rightMeta && rightMeta.cardImage ? (
                 <img
-                  // For layout:"flip" cards we always use the front image and rotate it 180deg when flipped.
-                  src={(rightFlipped && rightMeta?.scryfall?.layout !== 'flip' && rightMeta?.scryfall?.card_faces?.[1]?.image_uris?.large)
+                  src={(rightFlipped && rightMeta?.scryfall?.card_faces?.[1]?.image_uris?.large)
                     ? rightMeta.scryfall.card_faces[1].image_uris.large
                     : rightMeta.cardImage}
                   alt={rightMeta.name + ' card'}
                   className={`relative z-10 max-h-80 object-contain shadow-lg card cursor-pointer
                     ${!result ? 'card-hover-enabled' : ''}
                     ${result && result !== 'tie' && (result === 'right' ? 'card-glow-green' : 'card-glow-red')}`}
-                  style={{borderRadius: '11px', transform: (rightFlipped && rightMeta?.scryfall?.layout === 'flip') ? 'perspective(800px) rotateZ(180deg)' : undefined}}
+                  style={{borderRadius: '11px'}}
                   onClick={() => !result && !loadingPair && makeGuess('right')}
                   onMouseMove={e => {
                     if (result) return;
@@ -492,11 +485,11 @@ export default function CommanderGuessGame() {
                     const rotateY = ((x - centerX) / centerX) * 10;
                       img.style.setProperty('--rotate-x', `${rotateX}deg`);
                       img.style.setProperty('--rotate-y', `${rotateY}deg`);
-                      img.style.transform = 'perspective(800px) rotateX(var(--rotate-x)) rotateY(var(--rotate-y))' + ((rightFlipped && rightMeta?.scryfall?.layout === 'flip') ? ' rotateZ(180deg)' : '');
+                      img.style.transform = 'perspective(800px) rotateX(var(--rotate-x)) rotateY(var(--rotate-y))';
                   }}
                   onMouseLeave={e => {
                     if (result) return;
-                    e.currentTarget.style.transform = (rightFlipped && rightMeta?.scryfall?.layout === 'flip') ? 'perspective(800px) rotateZ(180deg)' : '';
+                    e.currentTarget.style.transform = '';
                   }}
                 />
               ) : (
@@ -518,7 +511,12 @@ export default function CommanderGuessGame() {
                 </div>
                 <div className="text-sm text-slate-400">{rightMeta?.set_name}</div>
                 <div className="text-xs text-slate-400 flex items-center">Mana Cost: {renderManaIcons(rightMeta?.cmc, rightMeta?.scryfall?.mana_cost) || 'N/A'}</div>
-                <div className="text-xs text-slate-400">{rightMeta?.oracle_text}</div>
+                <div className="text-xs text-slate-400">
+                  {rightFlipped
+                    ? (rightMeta?.scryfall?.card_faces?.[1]?.oracle_text || rightMeta?.oracle_text)
+                    : (rightMeta?.scryfall?.card_faces?.[0]?.oracle_text || rightMeta?.oracle_text)
+                  }
+                </div>
                 {result && rightMeta?.name && (
                   <a
                     href={`https://edhrec.com/commanders/${slugify(rightMeta.name)}`}
