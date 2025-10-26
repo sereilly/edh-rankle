@@ -78,6 +78,7 @@ function getRandomCommander() {
 }
 
 import wishlistImage from './assets/VagabonesWishlist.png';
+import flipImage from './assets/flip.png';
 
 // EDHREC Commander Rank Guessing Game
 // Single-file React component. Default export at bottom.
@@ -162,11 +163,17 @@ export default function CommanderGuessGame() {
   const [includeUnreleased, setIncludeUnreleased] = useState(false);
   const [includeIllegal, setIncludeIllegal] = useState(false);
   const [includeTransform, setIncludeTransform] = useState(false);
+  // Flip state for double-faced / transform cards
+  const [leftFlipped, setLeftFlipped] = useState(false);
+  const [rightFlipped, setRightFlipped] = useState(false);
 
   const loadNewPair = useCallback(async () => {
     setResult(null);
     setLeftMeta(null);
     setRightMeta(null);
+    // Reset flips when loading a new pair
+    setLeftFlipped(false);
+    setRightFlipped(false);
     setLoadingPair(true);
     try {
       let left, right, leftRank, rightRank;
@@ -259,6 +266,8 @@ export default function CommanderGuessGame() {
   setLeftMeta(null);
   setRightMeta(null);
   setUserGuess(null);
+  setLeftFlipped(false);
+  setRightFlipped(false);
   loadNewPair();
   };
 
@@ -331,13 +340,28 @@ export default function CommanderGuessGame() {
               )}
               {/* Art as semi-transparent background */}
               {leftMeta && leftMeta.art && (
-                <img src={leftMeta.art} alt={leftMeta.name + ' art'}
+                <img src={(leftFlipped && leftMeta?.scryfall?.card_faces?.[1]?.image_uris?.art_crop) ? leftMeta.scryfall.card_faces[1].image_uris.art_crop : leftMeta.art}
+                  alt={leftMeta.name + ' art'}
                   className="absolute inset-0 w-full h-full object-cover opacity-40" style={{zIndex: 1}} />
+              )}
+              {/* Flip control for double-faced / transform cards */}
+              {leftMeta?.scryfall?.card_faces?.length > 1 && (
+                <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setLeftFlipped(f => !f); }}
+                    className="pointer-events-auto bg-black bg-opacity-60 text-white text-sm px-3 py-2 rounded"
+                    aria-pressed={leftFlipped}
+                  >
+                    <img src={flipImage} alt={leftFlipped ? 'Front' : 'Flip'} className="h-6 w-auto" />
+                  </button>
+                </div>
               )}
               {/* Card image in foreground */}
               {leftMeta && leftMeta.cardImage ? (
                 <img
-                  src={leftMeta.cardImage}
+                  src={(leftFlipped && leftMeta?.scryfall?.card_faces?.[1]?.image_uris?.large)
+                    ? leftMeta.scryfall.card_faces[1].image_uris.large
+                    : leftMeta.cardImage}
                   alt={leftMeta.name + ' card'}
                   className={`relative z-10 max-h-80 object-contain shadow-lg card cursor-pointer
                     ${!result ? 'card-hover-enabled' : ''}
@@ -414,13 +438,28 @@ export default function CommanderGuessGame() {
               )}
               {/* Art as semi-transparent background */}
               {rightMeta && rightMeta.art && (
-                <img src={rightMeta.art} alt={rightMeta.name + ' art'}
+                <img src={(rightFlipped && rightMeta?.scryfall?.card_faces?.[1]?.image_uris?.art_crop) ? rightMeta.scryfall.card_faces[1].image_uris.art_crop : rightMeta.art}
+                  alt={rightMeta.name + ' art'}
                   className="absolute inset-0 w-full h-full object-cover opacity-40" style={{zIndex: 1}} />
+              )}
+              {/* Flip control for double-faced / transform cards */}
+              {rightMeta?.scryfall?.card_faces?.length > 1 && (
+                <div className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setRightFlipped(f => !f); }}
+                    className="pointer-events-auto bg-black bg-opacity-60 text-white text-sm px-3 py-2 rounded"
+                    aria-pressed={rightFlipped}
+                  >
+                    <img src={flipImage} alt={rightFlipped ? 'Front' : 'Flip'} className="h-6 w-auto" />
+                  </button>
+                </div>
               )}
               {/* Card image in foreground */}
               {rightMeta && rightMeta.cardImage ? (
                 <img
-                  src={rightMeta.cardImage}
+                  src={(rightFlipped && rightMeta?.scryfall?.card_faces?.[1]?.image_uris?.large)
+                    ? rightMeta.scryfall.card_faces[1].image_uris.large
+                    : rightMeta.cardImage}
                   alt={rightMeta.name + ' card'}
                   className={`relative z-10 max-h-80 object-contain shadow-lg card cursor-pointer
                     ${!result ? 'card-hover-enabled' : ''}
