@@ -140,7 +140,11 @@ export default function Daily() {
     // Disable drag listeners/attributes if card is in correct slot
     const dragProps = !isSolved && !isCorrect ? { ...attributes, ...listeners } : {};
     return (
-      <div ref={setNodeRef} style={style} {...dragProps} className="flex-1 min-h-[1px] flex flex-col items-center relative">
+      <div ref={setNodeRef} style={style} {...dragProps} className="w-full flex flex-col items-center relative">
+        {/* Ranking badge (position in current order) */}
+        <div className="absolute bottom-2 z-50 w-6 h-6 rounded-full bg-indigo-600/60 text-white flex items-center justify-center font-bold text-sm shadow-lg pointer-events-none">
+          {idx + 1}
+        </div>
         {/* Absolutely positioned label above first card */}
         {idx === 0 && !isDragging && (
           <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-green-300 uppercase tracking-wide text-center pointer-events-none" style={{whiteSpace: 'nowrap'}}>Most Popular</span>
@@ -150,6 +154,27 @@ export default function Daily() {
           <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-red-300 uppercase tracking-wide text-center pointer-events-none" style={{whiteSpace: 'nowrap'}}>Least Popular</span>
         )}
       <img src={card.image_uris.large} alt={card.name} className={`w-full max-h-[500px] object-contain ${isCorrect ? ' card-glow-green' : ''}`} style={{ borderRadius: '6%' }} />
+        {isSolved && (
+          <span className="text-base text-green-400 font-bold">Rank #{card.rank ?? "?"}</span>
+        )}
+      </div>
+    );
+  }
+
+  function UnsortableCard({ card, idx, isSolved }) {
+    return (
+      <div className="w-full flex flex-col items-center relative">
+        {/* Ranking badge (position in current order) */}
+        <div className="absolute bottom-2 z-50 w-6 h-6 rounded-full bg-indigo-600/60 text-white flex items-center justify-center font-bold text-sm shadow-lg pointer-events-none">
+          {idx + 1}
+        </div>
+        {idx === 0 && (
+          <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-green-300 uppercase tracking-wide text-center pointer-events-none" style={{whiteSpace: 'nowrap'}}>Most Popular</span>
+        )}
+        {idx === order.length - 1 && (
+          <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-red-300 uppercase tracking-wide text-center pointer-events-none" style={{whiteSpace: 'nowrap'}}>Least Popular</span>
+        )}
+        <img src={card.image_uris.large} alt={card.name} className="w-full max-h-[500px] object-contain mb-3 shadow-lg card-glow-green" style={{ borderRadius: '6%' }} />
         {isSolved && (
           <span className="text-base text-green-400 font-bold">Rank #{card.rank ?? "?"}</span>
         )}
@@ -198,11 +223,12 @@ export default function Daily() {
             strategy={rectSortingStrategy}
           >
               <div
-                className="
-                  w-full
-                  flex flex-row flex-wrap
+                className={
+                  `w-full
+                  grid grid-cols-2 grid-rows-3
                   gap-4 mb-6 pt-6
-                "
+                  md:flex md:flex-row md:flex-wrap`
+                }
               >
               {order.map((card, idx) => {
                 if (!card || !card.image_uris || !card.image_uris.large) return null;
@@ -210,18 +236,7 @@ export default function Daily() {
                 // Only make incorrect cards sortable
                 if (isCorrect) {
                   return (
-                    <div key={card.id} className="flex-1 min-h-[1px] flex flex-col items-center relative">
-                      {idx === 0 && (
-                        <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-green-300 uppercase tracking-wide text-center pointer-events-none" style={{whiteSpace: 'nowrap'}}>Most Popular</span>
-                      )}
-                      {idx === order.length - 1 && (
-                        <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-red-300 uppercase tracking-wide text-center pointer-events-none" style={{whiteSpace: 'nowrap'}}>Least Popular</span>
-                      )}
-                      <img src={card.image_uris.large} alt={card.name} className="w-full max-h-[500px] object-contain mb-3 shadow-lg card-glow-green" style={{ borderRadius: '6%' }} />
-                      {isSolved && (
-                        <span className="text-base text-green-400 font-bold">Rank #{card.rank ?? "?"}</span>
-                      )}
-                    </div>
+                    <UnsortableCard key={card.id} card={card} idx={idx} isSolved={isSolved} />
                   );
                 } else {
                   return (
