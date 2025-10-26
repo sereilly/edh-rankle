@@ -131,9 +131,9 @@ function pickTwoDistinct(arr) {
           const isTimeLordDoctor = typeof card.type_line === 'string' && card.type_line.includes("Time Lord Doctor");
           if (hasKeywords || isTimeLordDoctor) return false;
         }
-        // Transform filter: when enabled, only include cards that list the "Transform" keyword
+
         if (includeTransform) {
-          const hasTransform = Array.isArray(card.keywords) && card.keywords.includes("Transform");
+          const hasTransform = card.layout === 'transform' || card.layout === 'modal_dfc' || card.layout === 'double_faced_token' || card.layout === 'flip';
           if (!hasTransform) return false;
         }
         // Unreleased filter
@@ -323,7 +323,9 @@ export default function CommanderGuessGame() {
         </div>
       </div>
 
-      <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6">
+  {/* Determine flip-layout flags so we can treat layout:"flip" cards differently */}
+  { /* eslint-disable-next-line no-unused-vars */ }
+  <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Left */}
         <div
           className="bg-slate-900 rounded-lg p-4 flex flex-col justify-between items-center"
@@ -340,9 +342,14 @@ export default function CommanderGuessGame() {
               )}
               {/* Art as semi-transparent background */}
               {leftMeta && leftMeta.art && (
-                <img src={(leftFlipped && leftMeta?.scryfall?.card_faces?.[1]?.image_uris?.art_crop) ? leftMeta.scryfall.card_faces[1].image_uris.art_crop : leftMeta.art}
+                <img
+                  src={(leftFlipped && leftMeta?.scryfall?.layout !== 'flip' && leftMeta?.scryfall?.card_faces?.[1]?.image_uris?.art_crop)
+                    ? leftMeta.scryfall.card_faces[1].image_uris.art_crop
+                    : leftMeta.art}
                   alt={leftMeta.name + ' art'}
-                  className="absolute inset-0 w-full h-full object-cover opacity-40" style={{zIndex: 1}} />
+                  className="absolute inset-0 w-full h-full object-cover opacity-40"
+                  style={{zIndex: 1, transform: (leftFlipped && leftMeta?.scryfall?.layout === 'flip') ? 'rotate(180deg)' : undefined}}
+                />
               )}
               {/* Flip control for double-faced / transform cards */}
               {leftMeta?.scryfall?.card_faces?.length > 1 && (
@@ -359,14 +366,15 @@ export default function CommanderGuessGame() {
               {/* Card image in foreground */}
               {leftMeta && leftMeta.cardImage ? (
                 <img
-                  src={(leftFlipped && leftMeta?.scryfall?.card_faces?.[1]?.image_uris?.large)
+                  // For layout:"flip" cards we always use the front image and rotate it 180deg when flipped.
+                  src={(leftFlipped && leftMeta?.scryfall?.layout !== 'flip' && leftMeta?.scryfall?.card_faces?.[1]?.image_uris?.large)
                     ? leftMeta.scryfall.card_faces[1].image_uris.large
                     : leftMeta.cardImage}
                   alt={leftMeta.name + ' card'}
                   className={`relative z-10 max-h-80 object-contain shadow-lg card cursor-pointer
                     ${!result ? 'card-hover-enabled' : ''}
                     ${result && result !== 'tie' && (result === 'left' ? 'card-glow-green' : 'card-glow-red')}`}
-                  style={{borderRadius: '11px'}}
+                  style={{borderRadius: '11px', transform: (leftFlipped && leftMeta?.scryfall?.layout === 'flip') ? 'perspective(800px) rotateZ(180deg)' : undefined}}
                   onClick={() => !result && !loadingPair && makeGuess('left')}
                   onMouseMove={e => {
                     if (result) return;
@@ -380,11 +388,11 @@ export default function CommanderGuessGame() {
                     const rotateY = ((x - centerX) / centerX) * 10;
                       img.style.setProperty('--rotate-x', `${rotateX}deg`);
                       img.style.setProperty('--rotate-y', `${rotateY}deg`);
-                      img.style.transform = 'perspective(800px) rotateX(var(--rotate-x)) rotateY(var(--rotate-y))';
+                      img.style.transform = 'perspective(800px) rotateX(var(--rotate-x)) rotateY(var(--rotate-y))' + ((leftFlipped && leftMeta?.scryfall?.layout === 'flip') ? ' rotateZ(180deg)' : '');
                   }}
                   onMouseLeave={e => {
                     if (result) return;
-                    e.currentTarget.style.transform = '';
+                    e.currentTarget.style.transform = (leftFlipped && leftMeta?.scryfall?.layout === 'flip') ? 'perspective(800px) rotateZ(180deg)' : '';
                   }}
                 />
               ) : (
@@ -438,9 +446,14 @@ export default function CommanderGuessGame() {
               )}
               {/* Art as semi-transparent background */}
               {rightMeta && rightMeta.art && (
-                <img src={(rightFlipped && rightMeta?.scryfall?.card_faces?.[1]?.image_uris?.art_crop) ? rightMeta.scryfall.card_faces[1].image_uris.art_crop : rightMeta.art}
+                <img
+                  src={(rightFlipped && rightMeta?.scryfall?.layout !== 'flip' && rightMeta?.scryfall?.card_faces?.[1]?.image_uris?.art_crop)
+                    ? rightMeta.scryfall.card_faces[1].image_uris.art_crop
+                    : rightMeta.art}
                   alt={rightMeta.name + ' art'}
-                  className="absolute inset-0 w-full h-full object-cover opacity-40" style={{zIndex: 1}} />
+                  className="absolute inset-0 w-full h-full object-cover opacity-40"
+                  style={{zIndex: 1, transform: (rightFlipped && rightMeta?.scryfall?.layout === 'flip') ? 'rotate(180deg)' : undefined}}
+                />
               )}
               {/* Flip control for double-faced / transform cards */}
               {rightMeta?.scryfall?.card_faces?.length > 1 && (
@@ -457,14 +470,15 @@ export default function CommanderGuessGame() {
               {/* Card image in foreground */}
               {rightMeta && rightMeta.cardImage ? (
                 <img
-                  src={(rightFlipped && rightMeta?.scryfall?.card_faces?.[1]?.image_uris?.large)
+                  // For layout:"flip" cards we always use the front image and rotate it 180deg when flipped.
+                  src={(rightFlipped && rightMeta?.scryfall?.layout !== 'flip' && rightMeta?.scryfall?.card_faces?.[1]?.image_uris?.large)
                     ? rightMeta.scryfall.card_faces[1].image_uris.large
                     : rightMeta.cardImage}
                   alt={rightMeta.name + ' card'}
                   className={`relative z-10 max-h-80 object-contain shadow-lg card cursor-pointer
                     ${!result ? 'card-hover-enabled' : ''}
                     ${result && result !== 'tie' && (result === 'right' ? 'card-glow-green' : 'card-glow-red')}`}
-                  style={{borderRadius: '11px'}}
+                  style={{borderRadius: '11px', transform: (rightFlipped && rightMeta?.scryfall?.layout === 'flip') ? 'perspective(800px) rotateZ(180deg)' : undefined}}
                   onClick={() => !result && !loadingPair && makeGuess('right')}
                   onMouseMove={e => {
                     if (result) return;
@@ -478,11 +492,11 @@ export default function CommanderGuessGame() {
                     const rotateY = ((x - centerX) / centerX) * 10;
                       img.style.setProperty('--rotate-x', `${rotateX}deg`);
                       img.style.setProperty('--rotate-y', `${rotateY}deg`);
-                      img.style.transform = 'perspective(800px) rotateX(var(--rotate-x)) rotateY(var(--rotate-y))';
+                      img.style.transform = 'perspective(800px) rotateX(var(--rotate-x)) rotateY(var(--rotate-y))' + ((rightFlipped && rightMeta?.scryfall?.layout === 'flip') ? ' rotateZ(180deg)' : '');
                   }}
                   onMouseLeave={e => {
                     if (result) return;
-                    e.currentTarget.style.transform = '';
+                    e.currentTarget.style.transform = (rightFlipped && rightMeta?.scryfall?.layout === 'flip') ? 'perspective(800px) rotateZ(180deg)' : '';
                   }}
                 />
               ) : (
