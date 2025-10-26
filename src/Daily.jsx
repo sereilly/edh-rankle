@@ -1,6 +1,6 @@
 import wishlistImage from './assets/VagabonesWishlist.png';
 import React, { useState, useEffect } from "react";
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { pageview } from './analytics';
 import { DndContext, closestCenter, useSensor, useSensors, PointerSensor, TouchSensor } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable, rectSortingStrategy } from '@dnd-kit/sortable';
@@ -210,6 +210,23 @@ export default function Daily() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white p-6 flex flex-col items-center">
+      <nav className="w-full flex justify-center mb-4">
+        <div className="bg-slate-800 bg-opacity-40 rounded shadow-md px-3 py-2 flex gap-3">
+          <Link
+            to="/"
+            className={`px-3 py-2 rounded text-slate-300 hover:text-white`}
+            aria-current={location.pathname === '/' ? 'page' : undefined}
+          >
+            Home
+          </Link>
+          <Link
+            to="/daily"
+              className={`px-3 py-2 rounded bg-indigo-600 hover:bg-indigo-500 text-white`}
+          >
+            Daily Challenge
+          </Link>
+        </div>
+      </nav>
       <h1 className="text-3xl font-bold mb-4 text-center">Daily Ranking Challenge</h1>
       <p className="mb-4 text-slate-300 max-w-xl text-center">
         Drag to rearrange the commanders from <b>most popular (left)</b> to <b>least popular (right)</b>. Popularity is based on EDHREC rank.

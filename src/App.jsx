@@ -268,12 +268,23 @@ export default function CommanderGuessGame() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white p-6 flex flex-col items-center">
-      <div className="w-full flex justify-center mb-4 hidden sm:flex">
-        <div className="bg-indigo-700 text-white px-6 py-3 rounded shadow-lg text-lg font-semibold">
-          Try out the new{' '}
-          <Link to="/daily" className="underline text-yellow-300 hover:text-yellow-400">Daily Challenge!</Link>
+      <nav className="w-full flex justify-center mb-4">
+        <div className="bg-slate-800 bg-opacity-40 rounded shadow-md px-3 py-2 flex gap-3">
+          <Link
+            to="/"
+            className={`px-3 py-2 rounded bg-indigo-600 hover:bg-indigo-500 text-white`}
+            aria-current={location.pathname === '/' ? 'page' : undefined}
+          >
+            Home
+          </Link>
+          <Link
+            to="/daily"
+            className={`px-3 py-2 rounded text-slate-300 hover:text-white`}
+          >
+            Daily Challenge
+          </Link>
         </div>
-      </div>
+      </nav>
       <h1 className="text-3xl font-bold mb-4">EDH Rankle</h1>
       <p className="mb-4 text-slate-300 max-w-xl text-center">Guess which commander has a better rank on <a href="https://edhrec.com" target="_blank" rel="noopener noreferrer" className="underline">EDHREC</a>. Ranks are revealed after guessing. Your score increases for each correct guess.</p>
 
