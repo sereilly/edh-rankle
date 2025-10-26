@@ -247,8 +247,8 @@ export default function Daily() {
                 className={
                   `w-full
                   grid grid-cols-2 grid-rows-3
-                  gap-4 mb-6 pt-6
-                  md:grid md:grid-cols-6 md:grid-rows-1`
+                  gap-8 mb-6 py-4
+                  md:gap-4 md:grid md:grid-cols-6 md:grid-rows-1`
                 }
               >
               {order.map((card, idx) => {
