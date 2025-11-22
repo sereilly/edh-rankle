@@ -6,3 +6,6 @@ Guess which commander has a better rank on <a href="https://edhrec.com" target="
 - npm run build (For packaging)
 - npm run deploy (For publishing)
 - npm run preview (For testing the packaged build)
+
+## Exporting commanders
+- Run commanders.py
