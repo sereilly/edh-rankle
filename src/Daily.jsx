@@ -197,6 +197,22 @@ export default function Daily() {
   }
 
   // Detect touch capability using window.matchMedia
+  const [copied, setCopied] = useState(false);
+
+  function copyResults() {
+    const seed = getDailySeed();
+    const lines = [`EDH Rankle Daily #${seed}`, `Solved in ${guessHistory.length} guess${guessHistory.length === 1 ? '' : 'es'}!`, ''];
+    guessHistory.forEach((guess, i) => {
+      const row = guess.correctness.map(c => c ? '🟩' : '🟥').join(' ');
+      lines.push(row);
+    });
+    const text = lines.join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   useEffect(() => {
     const mq = window.matchMedia('(pointer: coarse)');
@@ -305,7 +321,15 @@ export default function Daily() {
         </div>
       </div>
       {isSolved && (
-        <div className="mt-6 text-green-400 font-bold text-xl">You solved it!</div>
+        <div className="mt-6 flex flex-col items-center gap-3">
+          <div className="text-green-400 font-bold text-xl">You solved it!</div>
+          <button
+            onClick={copyResults}
+            className="px-4 py-2 rounded bg-green-600 hover:bg-green-500 font-semibold text-white transition-colors"
+          >
+            {copied ? 'Copied!' : 'Copy Results'}
+          </button>
+        </div>
       )}
       <div className="w-full flex justify-center items-center mt-8 mb-2 gap-6">
         <a href="https://store.steampowered.com/app/3157380/Vagabones/" target="_blank" rel="noopener noreferrer">
